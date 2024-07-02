@@ -1,4 +1,4 @@
-import ProductManager from '../services/productManager.mdb.js';
+import ProductManager from '../models/dao/productManager.mdb.js';
 import ProductModel from '../models/products.model.js';
 
 const productManager = new ProductManager(ProductModel);

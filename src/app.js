@@ -1,13 +1,18 @@
+// dependencias
 import express from 'express'
-import config from './config.js'
+import mongoose from 'mongoose'
 import logger from 'morgan'
 import cookieParser from 'cookie-parser'
 import handlebars from 'express-handlebars'
 
+/* passport session */
+
 // routes
 
+import config from './config.js'
 import productsRoutes from './routes/products.routes.js'
-import mongoose from 'mongoose'
+import usersRoutes from './routes/users.routes.js'
+import cartRoutes from './routes/carts.routes.js'
 
 const app = express()
 
@@ -41,6 +46,8 @@ const expressInstance = app.listen(config.PORT, async () => {
     // app.use(passport.initialize())
     // app.use(passport.session())
 
+    
+
     // motor plantilla config 
     app.engine('handlebars', handlebars.engine());
     app.set('views', `${config.DIRNAME}/views`);
@@ -48,8 +55,10 @@ const expressInstance = app.listen(config.PORT, async () => {
 
 
     app.use('/api/db/products', productsRoutes)
+    app.use('/api/db/users', usersRoutes)
+    app.use('/api/db/cart', cartRoutes)
     app.use('/static', express.static(`${config.DIRNAME}/public`))
 
     // views    
-    // app.use('/', viewsRoutes)
+    app.use('/', viewsRoutes)
 })
