@@ -1,0 +1,231 @@
+<div class="container">
+
+    <h1>Perfil de usuario {{login_type}}</h1>
+
+    <h2>Usuario: {{user.firstName}}, {{user.lastName}}</h2>
+    <h3>Rol: {{user.role}}</h3>
+
+    <form action="/api/auth/logout" method="get">
+        <button type="submit" class="btn btn-success">Salir</button>
+    </form>
+
+    <h1 class="mt-4">Listado de productos</h1>
+    <div class="row">
+        {{#each products}}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Nombre del producto: {{title}}</h6>
+                    <p class="card-text">ID del producto: {{_id}}</p>
+                    <p class="card-text">Precio del producto: {{price}}</p>
+                    <p class="card-text">Descripción del producto: {{description}}</p>
+                    <p class="card-text">Stock disponible: {{stock}}</p>
+                    <p class="card-text">Categoría: {{category}}</p>
+                    <button class="btn btn-primary add-to-cart" data-id="{{_id}}">Agregar al carrito</button>
+                </div>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+    <div id="pagination" class="mt-3">
+        {{#if showPrev}}
+        <a href="/realtimeproducts?page={{prevPage}}" class="btn btn-primary">Anterior</a>
+        {{/if}}
+        <span class="mx-2">Página {{currentPage}} de {{totalPages}}</span>
+        {{#if showNext}}
+        <a href="/realtimeproducts?page={{nextPage}}" class="btn btn-primary">Siguiente</a>
+        {{/if}}
+    </div>
+</div>
+<div class="container-">
+    <div class="row">
+        <!-- Lista de productos -->
+        <div class="col-md-6">
+            <h1>Listado de productos</h1>
+            <ul id="productsList" class="list-group">
+                {{#each products}}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{this.title}} ($ {{this.price}})</span>
+                </li>
+                {{/each}}
+            </ul>
+        </div>
+
+        <!-- Formulario para agregar un nuevo producto -->
+        <div class="col-md-6">
+            <h1>Agregar Producto</h1>
+            <form id="formulario-producto" method="post" enctype="multipart/form-data" action="/api/products/"
+                class="mt-3">
+                <div class="mb-3">
+                    <input type="text" id="nombre-producto" name="title" class="form-control"
+                        placeholder="Título del Producto" />
+                </div>
+                <div class="mb-3">
+                    <input type="text" id="descripcion-producto" name="description" class="form-control"
+                        placeholder="Descripción del Producto" />
+                </div>
+                <div class="mb-3">
+                    <input type="text" id="categoria-producto" name="description" class="form-control"
+                        placeholder="Categoria del Producto" />
+                </div>
+                <div class="mb-3">
+                    <input type="number" id="precio-producto" name="price" class="form-control"
+                        placeholder="Precio del Producto" />
+                </div>
+                <div class="mb-3">
+                    <input type="text" id="codigo-producto" name="code" class="form-control"
+                        placeholder="Código del Producto" />
+                </div>
+                <div class="mb-3">
+                    <input type="number" id="stock-producto" name="stock" class="form-control"
+                        placeholder="Stock del Producto" />
+                </div>
+                <div class="mb-3">
+                    <input type="file" id="thumbnails-producto" name="thumbnails" class="form-control" multiple />
+                </div>
+                <button id="agregar-producto-btn" class="btn btn-primary">Agregar Producto</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+    integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+    crossorigin="anonymous"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const socketClient = io('ws://localhost:4000');
+        const productsList = document.getElementById('productsList');
+
+        // Evento de clic para agregar un producto
+        document.getElementById('agregar-producto-btn').addEventListener('click', async (event) => {
+            event.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
+
+            // Crear un objeto con los datos del nuevo producto
+            const nuevoProducto = {
+                title: document.getElementById('nombre-producto').value,
+                description: document.getElementById('descripcion-producto').value,
+                category: document.getElementById('categoria-producto').value,
+                price: document.getElementById('precio-producto').value,
+                code: document.getElementById('codigo-producto').value,
+                stock: document.getElementById('stock-producto').value,
+                // Agregar aquí cualquier otro campo del formulario que necesites enviar
+            };
+
+            try {
+                // Realizar la solicitud POST al servidor
+                const formData = new FormData();
+                formData.append('title', nuevoProducto.title);
+                formData.append('description', nuevoProducto.description);
+                formData.append('category', nuevoProducto.description);
+                formData.append('price', nuevoProducto.price);
+                formData.append('code', nuevoProducto.code);
+                formData.append('stock', nuevoProducto.stock);
+
+                const thumbnailsInput = document.getElementById('thumbnails-producto');
+                for (const file of thumbnailsInput.files) {
+                    formData.append('thumbnails', file);
+                }
+
+                const response = await fetch('/api/db/products/', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                // Verificar si la solicitud fue exitosa
+                if (response.ok) {
+                    // Limpiar los campos del formulario después de enviar el producto
+                    document.getElementById('formulario-producto').reset();
+                    // Emitir el evento 'nuevoProducto' al servidor a través de Socket.IO
+                    socketClient.emit('nuevoProducto', nuevoProducto);
+
+                } else {
+                    // Mostrar un mensaje de error si la solicitud no fue exitosa
+                    console.error('Error al agregar el producto:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error al agregar el producto:', error.message);
+            }
+        });
+
+        // Escuchar eventos del servidor Socket.IO para nuevos productos
+        socketClient.on('nuevoProducto', data => {
+            if (data && data.product) {
+                const nuevoProducto = data.product;
+
+                // Crear un nuevo elemento de la lista con la información del nuevo producto
+                const nuevoItem = document.createElement('li');
+                nuevoItem.textContent = `${nuevoProducto.title} ($${nuevoProducto.price})`;
+                nuevoItem.classList.add('list-group-item');
+
+                // Agregar un icono de papelera para eliminar el producto
+                const deleteIcon = document.createElement('span');
+                deleteIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                        <path d="M3 5V3h10v2H3z"/>
+                        <path fill-rule="evenodd" d="M5.5 0a.5.5 0 0 1 .5.5V1h4V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v1H1V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6zm5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 1 0v-4a.5.5 0 0 0-.5-.5zm2 0a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 1 0v-4a.5.5 0 0 0-.5-.5z"/>
+                    </svg>`;
+                deleteIcon.classList.add('delete-product');
+                deleteIcon.setAttribute('data-product-id', nuevoProducto.id);
+
+                // Agregar el icono de papelera al elemento del producto
+                nuevoItem.appendChild(deleteIcon);
+
+                // Agregar el nuevo elemento de la lista
+                productsList.appendChild(nuevoItem);
+
+                // Agregar evento de clic al icono de papelera para eliminar el producto
+                deleteIcon.addEventListener('click', async (event) => {
+                    event.preventDefault(); // Prevenir el comportamiento predeterminado del evento
+
+                    const productId = event.currentTarget.getAttribute('data-product-id');
+                    const listItemToDelete = event.currentTarget.parentElement; // Obtener el elemento padre del icono de eliminar
+
+                    try {
+                        // Realizar una solicitud al servidor para eliminar el producto
+                        const response = await fetch(`/api/products/${productId}`, {
+                            method: 'DELETE'
+                        });
+
+                        if (response.ok) {
+                            // Eliminar el elemento de la lista en el cliente
+                            listItemToDelete.remove();
+
+                            // Enviar el ID del producto eliminado al servidor para emitir el evento 'productoEliminado'
+                            socketClient.emit('productoEliminado', { id: productId });
+                        } else {
+                            console.error('Error al eliminar el producto:', response.statusText);
+                        }
+                    } catch (error) {
+                        console.error('Error al eliminar el producto:', error.message);
+                    }
+                });
+            } else {
+                console.error('Datos recibidos no válidos:', data);
+            }
+        });
+
+        // Escuchar eventos del servidor Socket.IO para productos eliminados
+        socketClient.on('productoEliminado', data => {
+            if (data && data.id) {
+                const productId = data.id; // Obtener el ID del producto
+
+                // Buscar el elemento de la lista que coincide con el ID del producto eliminado
+                const listItemToDelete = document.querySelector(`[data-product-id="${productId}"]`);
+
+                // Verificar si se encontró el elemento
+                if (listItemToDelete) {
+                    const parentElement = listItemToDelete.parentElement; // Obtener el elemento padre (la lista)
+
+                    // Verificar si el elemento padre existe
+                    if (parentElement) {
+                        parentElement.removeChild(listItemToDelete); // Eliminar el elemento de la lista
+                    } else {
+                        console.error('Error: El elemento padre no existe');
+                    }
+                }
+            }
+        });
+    });
+</script>

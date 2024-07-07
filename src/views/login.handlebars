@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CODERStore</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            background-color: #333;
+        }
+        .login-container {
+            max-width: 360px;
+            margin: auto;
+            margin-top: 64px;
+            padding: 32px;
+            border-radius: 0.5em;
+            color: #333;
+            border: 1px solid #bbb;
+            background-color: #ccc;
+        }
+        .a2 {
+            color: #333;
+        }
+        .a2:hover {
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1><b>CODERStore</b></h1>
+        <h2><b>Login de usuario</b></h2>
+        <form id="loginForm" style="margin-top: 32px;">
+            <div class="input-group" style="width: 300px; margin-bottom: 32px;">
+                <span class="input-group-text" id="group1"><i class="fa-solid fa-user"></i></span>
+                <input type="email" name="email" class="form-control" placeholder="Email" required="required" autofocus="autofocus">
+            </div>
+            <div class="input-group" style="width: 300px; margin-bottom: 32px;">
+                <span class="input-group-text" id="group2"><i class="fa-solid fa-lock"></i></span>
+                <input type="password" name="password" class="form-control" required="required">
+            </div>
+            <div style="margin-top: 24px;">
+                <button type="submit" class="btn btn-success submit_btn">Ingresar</button>
+                <br /><br />
+                <button type="button" class="btn btn-info submit_btn" onclick="window.location.replace('/api/auth/ghlogin')">Github</button>
+            </div>
+            <div style="margin-top: 24px;">
+                No tenés cuenta?: <a class="a2" href="/register">Registrate</a>
+            </div>
+        </form>
+    </div>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const email = formData.get('email');
+            const password = formData.get('password');
+
+            try {
+                const response = await fetch('/api/auth/jwtlogin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    const data = await response.json();
+                    console.error('Error:', data);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

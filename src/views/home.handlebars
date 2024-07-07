@@ -1,0 +1,29 @@
+<div class="container">
+    <h1 class="mt-4">Listado de productos</h1>
+    <div class="row">
+        {{#each products}}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Nombre del producto: {{title}}</h6>
+                    <p class="card-text">ID del producto: {{_id}}</p>
+                    <p class="card-text">Precio del producto: {{price}}</p>
+                    <p class="card-text">Descripción del producto: {{description}}</p>
+                    <p class="card-text">Stock disponible: {{stock}}</p>
+                    <p class="card-text">Categoría: {{category}}</p>
+                    <button class="btn btn-primary add-to-cart" data-id="{{_id}}">Agregar al carrito</button>
+                </div>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+    <div id="pagination" class="mt-3">
+        {{#if showPrev}}
+        <a href="/home?page={{prevPage}}" class="btn btn-primary">Anterior</a>
+        {{/if}}
+        <span class="mx-2">Página {{currentPage}} de {{totalPages}}</span>
+        {{#if showNext}}
+        <a href="/home?page={{nextPage}}" class="btn btn-primary">Siguiente</a>
+        {{/if}}
+    </div>
+</div>

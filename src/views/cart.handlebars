@@ -1,0 +1,23 @@
+<div class="container">
+    <h1>Carrito de Compras</h1>
+    <p>Id del carrito: {{cart._id}}</p>
+    <p>Usuario:</p>
+    <ul>
+        <li>
+            <p>Id: {{cart._user_id._id}}</p>
+        </li>
+    </ul>
+    <p>Productos:</p>
+    <div class="product-cards">
+        {{#each cart.products}}
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{this._id.title}}</h5>
+                <p class="card-text">Precio: ${{this._id.price}}</p>
+                <p class="card-text">Cantidad: {{this.qty}}</p>
+                <p class="card-text">Categoria: {{this._id.category}}</p>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+</div>

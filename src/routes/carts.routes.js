@@ -3,6 +3,13 @@ import { getAllCarts, getCartById, createCart, updateCart, deleteCart, addProduc
 
 const router = Router();
 
+router.param('id', async (req, res, next, id) => {
+    if (!config.MONGODB_ID_REGEX.test(req.params.id)) {
+        return res.status(400).send({ origin: config.SERVER, payload: null, error: 'Id no válido' });
+    }
+    next();
+})
+
 router.get('/', getAllCarts);
 router.get('/:id', getCartById);
 router.post('/', createCart);

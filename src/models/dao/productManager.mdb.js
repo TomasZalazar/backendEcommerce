@@ -11,6 +11,14 @@ class ProductManager {
             return { status: 500, origin: 'DAO', payload: { error: error.message } };
         }
     }
+    async  getOne(filter){
+        try {
+            const products = await this.ProductModel.findOne(filter).lean();
+            return { status: 200, origin: 'DAO', payload: products };
+        } catch (err) {
+            return { status: 500, origin: 'DAO', payload: { error: error.message } };
+        };
+    };
 
     async getById(id) {
         try {
