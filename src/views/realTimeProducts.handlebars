@@ -21,7 +21,8 @@
                     <p class="card-text">Descripción del producto: {{description}}</p>
                     <p class="card-text">Stock disponible: {{stock}}</p>
                     <p class="card-text">Categoría: {{category}}</p>
-                    <button class="btn btn-primary add-to-cart" data-id="{{_id}}">Agregar al carrito</button>
+                    <button class="btn btn-primary add-to-cart" data-cartid="{{cartId}}"
+                        data-productid="{{_id}}">Agregar al carrito</button>
                 </div>
             </div>
         </div>
@@ -65,7 +66,7 @@
                         placeholder="Descripción del Producto" />
                 </div>
                 <div class="mb-3">
-                    <input type="text" id="categoria-producto" name="description" class="form-control"
+                    <input type="text" id="categoria-producto" name="category" class="form-control"
                         placeholder="Categoria del Producto" />
                 </div>
                 <div class="mb-3">
@@ -98,8 +99,40 @@
     document.addEventListener('DOMContentLoaded', () => {
         const socketClient = io('ws://localhost:4000');
         const productsList = document.getElementById('productsList');
+        const addToCartButtons = document.querySelectorAll('.add-to-cart');
+        
+        addToCartButtons.forEach(button => {
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
 
-        // Evento de clic para agregar un producto
+                const cartId = '{{user._cart_id._id}}'// Obtén el ID del carrito desde el botón
+                const productId = button.getAttribute('data-productid'); // Obtén el ID del producto desde el botón
+
+                try {
+                    const token = localStorage.getItem('token'); // Obtén el token JWT almacenado en localStorage
+
+                    const response = await fetch(`/api/cart/${cartId}/products/${productId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}` // Incluye el token JWT en el header Authorization
+                        },
+                        body: JSON.stringify({ qty: 1 })
+                    });
+
+                    if (response.ok) {
+                        console.log('Producto agregado al carrito con éxito');
+                        // Aquí puedes actualizar la UI o realizar otras acciones después de agregar al carrito
+                    } else {
+                        console.error('Error al agregar producto al carrito:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error al conectar con el servidor:', error.message);
+                }
+            });
+        });
+
+    // Evento de clic para agregar un producto
         document.getElementById('agregar-producto-btn').addEventListener('click', async (event) => {
             event.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
 

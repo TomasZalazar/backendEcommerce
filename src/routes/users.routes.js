@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import { getUsers, getUserById, createUser, updateUser, deleteUser, aggregateUsers, paginateUsers } from '../controllers/users.controller.js';
-import { verifyToken } from '../services/utils.js';
+import { handlePolicies, verifyToken } from '../services/utils.js';
 import { verifyRequiredBody } from '../services/utils.js';
-import { adminAuth } from '../services/adminAuth.js';
 import config from '../config.js';
 
 const router = Router();
@@ -12,13 +11,17 @@ router.param('id', async (req, res, next, id) => {
     }
     next();
 })
+// Rutas públicas
+router.get('/', getUsers);
+router.get('/:id', getUserById);
 
-router.get('/',  getUsers);
-router.get('/:id', verifyToken, getUserById);
+// Rutas protegidas para la creación de usuarios
 router.post('/create', verifyRequiredBody(['firstName', 'lastName', 'email', 'password']), createUser);
-router.put('/:id', verifyToken, verifyRequiredBody(['firstName', 'lastName', 'email', 'password']), updateUser);
-router.delete('/:id', verifyToken, deleteUser);
-router.get('/aggregate/:role', adminAuth, aggregateUsers);
+
+// Rutas protegidas para administradores
+router.put('/:id', verifyToken, handlePolicies(['admin']), updateUser);
+router.delete('/:id', verifyToken, handlePolicies(['admin']), deleteUser);
+router.get('/aggregate/:role', verifyToken, handlePolicies(['admin']), aggregateUsers);
 router.get('/paginate/:page/:limit', verifyToken, paginateUsers);
 
 export default router;

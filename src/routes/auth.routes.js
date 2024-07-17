@@ -92,6 +92,8 @@ router.post('/jwtlogin', verifyRequiredBody(['email', 'password']), passport.aut
 router.get('/current', passport.authenticate('current', { failureRedirect: `/current?error=${encodeURI('No hay un token registrado')}`}), async (req, res) => {
     try {
         const currentToken = req.user; // Asumiendo que req.user ya contiene los datos que quieres enviar
+        console.log(currentToken)
+        console.log(req.user)
         res.status(200).json({ payload: currentToken });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -113,12 +115,25 @@ router.get('/ppadmin', passportCall('jwtlogin'), verifyAuthorization('admin'), a
     }
 });
 
+// Logout endpoint para manejar tanto sesiones como JWT
 router.get('/logout', async (req, res) => {
     try {
-        req.session.destroy((err) => {
-            if (err) return res.status(500).send({ origin: config.SERVER, payload: 'Error al ejecutar logout', error: err });
-            res.redirect('/login');
-        });
+        // Destruir la sesión del usuario si se está usando sesiones
+        if (req.session) {
+            req.session.destroy((err) => {
+                if (err) {
+                    return res.status(500).send({ origin: config.SERVER, payload: null, error: 'Error al ejecutar logout' });
+                }
+            });
+        }
+
+        // Limpiar la cookie que contiene el token JWT si está presente
+        if (req.cookies[`${config.APP_NAME}_cookie`]) {
+            res.clearCookie(`${config.APP_NAME}_cookie`);
+        }
+
+        // Redirigir al usuario a la página de login u otra página de tu aplicación
+        res.redirect('/login');
     } catch (err) {
         res.status(500).send({ origin: config.SERVER, payload: null, error: err.message });
     }

@@ -1,5 +1,6 @@
 import productModel from "../products.model.js";
-import  config  from '../../config.js';
+import config from '../../config.js';
+import TicketModel from "../tickets.model.js";
 
 class CartsManager {
     constructor(cartModel, userModel) {
@@ -7,6 +8,78 @@ class CartsManager {
         this.userModel = userModel;
         this.productModel = productModel;
     }
+
+    async purchaseCart(cartId, userEmail, req) {
+        try {
+            // Obtener el token desde la cookie
+            const token = req.cookies[`${config.APP_NAME}_cookie`];
+
+            // Verificar el token
+            const decoded = jwt.verify(token, config.SECRET);
+            const userId = decoded._id;
+
+            // Verificar si el usuario tiene permiso para realizar la compra
+            console.log('User ID:', userId);
+
+            // Obtener el carrito del usuario
+            const cart = await this.getCartById(cartId, userId);
+            if (!cart) {
+                console.error('Carrito no encontrado');
+                return { status: 404, error: 'Carrito no encontrado' };
+            }
+            console.log('Carrito encontrado:', cart);
+
+            let totalAmount = 0;
+            const unavailableProducts = [];
+
+            for (const cartProduct of cart.products) {
+                const product = cartProduct.product;
+                const availableStock = product.stock;
+
+                if (availableStock >= cartProduct.quantity) {
+                    // Suficiente stock para comprar
+                    product.stock -= cartProduct.quantity;
+                    totalAmount += product.price * cartProduct.quantity;
+                    await product.save();
+                } else {
+                    // No hay suficiente stock, marcar como no disponible
+                    unavailableProducts.push(product._id);
+                }
+            }
+
+            // Filtrar los productos comprados y no disponibles
+            const purchasedProducts = cart.products.filter(cartProduct => !unavailableProducts.includes(cartProduct.product._id));
+
+            let ticket = null;
+            if (purchasedProducts.length > 0) {
+                ticket = new TicketModel({
+                    amount: totalAmount,
+                    purchaser: userEmail,
+                });
+
+                await ticket.save();
+                console.log('Ticket creado:', ticket);
+            }
+
+            // Actualizar el carrito solo con productos no disponibles
+            cart.products = cart.products.filter(cartProduct => unavailableProducts.includes(cartProduct.product._id));
+            await cart.save();
+
+            console.log('Compra realizada con éxito');
+            return {
+                status: 200,
+                payload: {
+                    message: 'Compra realizada con éxito',
+                    ticket: ticket,
+                    unavailableProducts: unavailableProducts,
+                },
+            };
+        } catch (error) {
+            console.error('Error al procesar la compra:', error);
+            return { status: 500, error: 'Error al procesar la compra' };
+        }
+    }
+
 
     async getAll() {
         try {
@@ -73,15 +146,19 @@ class CartsManager {
             if (!product) {
                 return { status: 404, error: 'Product not found' };
             }
-    
+
             let cart = await this.cartModel.findById(cartId);
+            if (!cart) {
+                return { status: 404, error: 'Cart not found' };
+            }
+
             const existingProduct = cart.products.find(item => String(item.product._id) === productId);
             if (existingProduct) {
                 existingProduct.qty += qty;
             } else {
                 cart.products.push({ product: productId, qty });
             }
-    
+
             await cart.save();
             return { status: 201, message: 'Product added to cart successfully', payload: cart };
         } catch (error) {

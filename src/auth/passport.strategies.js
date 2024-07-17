@@ -157,8 +157,9 @@ const initAuthStrategies = () => {
         },
         async (jwtPayload, done) => {
             try {
-
+                console.log(`JWT Payload: ${JSON.stringify(jwtPayload)}`)
                 const user = await userModel.findById(jwtPayload.id);
+                console.log(user)
                 if (user) {
                     return done(null, user);
                 } else {

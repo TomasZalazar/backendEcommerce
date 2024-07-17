@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct, paginateProducts } from '../controllers/products.controller.js';
 import { uploader } from '../services/uploader.js';
 import config from '../config.js';
-import { handlePolicies } from '../services/utils.js';
+import { handlePolicies, verifyRequiredBody, verifyToken } from '../services/utils.js';
 
 const router = Router();
 
@@ -14,11 +14,14 @@ router.param('id', async (req, res, next, id) => {
 })
 
 
-router.get('/paginate', handlePolicies(['admin']), paginateProducts);
+// Rutas públicas
+router.get('/paginate', paginateProducts);
 router.get('/', getAllProducts);
 router.get('/:id', getProductById);
-router.post('/', uploader.array('thumbnails', 4), createProduct);
-router.put('/:id', updateProduct);
-router.delete('/:id', deleteProduct);
+
+// Rutas protegidas para administradores
+router.post('/', verifyToken, handlePolicies(['admin']), verifyRequiredBody(['title', 'description', 'price', 'stock', 'category']), uploader.array('thumbnails', 4), createProduct);
+router.put('/:id', verifyToken, handlePolicies(['admin']), updateProduct);
+router.delete('/:id', verifyToken, handlePolicies(['admin']), deleteProduct);
 
 export default router;

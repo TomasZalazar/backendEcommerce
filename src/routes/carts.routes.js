@@ -1,5 +1,8 @@
 import { Router } from 'express';
-import { getAllCarts, getCartById, createCart, updateCart, deleteCart, addProductToCart, removeProductFromCart, clearCartProducts } from '../controllers/carts.controller.js';
+import { getAllCarts, getCartById, createCart, updateCart, deleteCart, addProductToCart, removeProductFromCart, clearCartProducts, purchaseCart } from '../controllers/carts.controller.js';
+import { handlePolicies, verifyToken } from '../services/utils.js';
+import { passportCall } from '../auth/passport.strategies.js';
+import config from '../config.js';
 
 const router = Router();
 
@@ -9,14 +12,26 @@ router.param('id', async (req, res, next, id) => {
     }
     next();
 })
-
+router.param('productId', async (req, res, next, id) => {
+    if (!config.MONGODB_ID_REGEX.test(req.params.productId)) {
+        return res.status(400).send({ origin: config.SERVER, payload: null, error: 'Id del producto no válido' });
+    }
+    next();
+});
+// Rutas públicas
 router.get('/', getAllCarts);
 router.get('/:id', getCartById);
-router.post('/', createCart);
-router.put('/:id', updateCart);
-router.delete('/:id', deleteCart);
-router.post('/:id/products/:productId', addProductToCart);
-router.delete('/:id/products/:productId', removeProductFromCart);
-router.delete('/:id/products', clearCartProducts);
+
+// Rutas protegidas para usuarios autenticados
+router.post('/', verifyToken, createCart);
+router.post('/:cartId/products/:productId', verifyToken,handlePolicies(['admin']), addProductToCart);
+router.delete('/:id/products', verifyToken, clearCartProducts);
+router.delete('/:id/products/:productId', verifyToken, removeProductFromCart);
+
+router.post('/:cartId/purchase', verifyToken, purchaseCart);
+
+// Rutas protegidas para administradores
+router.put('/:id', verifyToken, handlePolicies(['admin']), updateCart);
+router.delete('/:id', verifyToken, handlePolicies(['admin']), deleteCart);
 
 export default router;

@@ -24,6 +24,7 @@ const app = express()
 
 const expressInstance = app.listen(config.PORT, async () => { 
     MongoSingleton.getInstance()
+
     
     //socket
     const socketServer = initSocket(expressInstance);
@@ -52,16 +53,16 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.engine('handlebars', handlebars.engine());
     app.set('views', `${config.DIRNAME}/views`);
     app.set('view engine', 'handlebars');
+    app.use('/static', express.static(`${config.DIRNAME}/public`))
 
     // endpoints
-    app.use('/api/db/products', productsRoutes)
-    app.use('/api/db/users', usersRoutes)
-    app.use('/api/db/cart', cartRoutes)
+    app.use('/api/products', productsRoutes)
+    app.use('/api/users', usersRoutes)
+    app.use('/api/cart', cartRoutes)
     app.use('/api/auth', authRoutes)
 
     // views    
     app.use('/', viewsRoutes)
 
-    app.use('/static', express.static(`${config.DIRNAME}/public`))
 
 })
