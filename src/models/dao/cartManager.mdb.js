@@ -1,6 +1,7 @@
 import productModel from "../products.model.js";
 import config from '../../config.js';
 import TicketModel from "../tickets.model.js";
+import { sendPurchaseEmail } from "../../services/emaiilService.js";
 
 class CartsManager {
     constructor(cartModel, userModel) {
@@ -21,7 +22,6 @@ class CartsManager {
         }
     
         const userData = user;
-        console.log('Datos del usuario:', userData);
         let ticketAmount = 0;
     
         for (let item of cart.products) {
@@ -69,7 +69,11 @@ class CartsManager {
             };
             const ticketFinished = await TicketModel.create(ticket);
             console.log('Ticket creado:', ticketFinished);
-    
+               // Enviar correo electrónico de confirmación
+               const subject = 'Compra realizada con éxito';
+               const text = `Hola ${userData.firstName},\n\nTu compra con el carrito ${cid} ha sido realizada con éxito.\n\nGracias por tu compra.\n\nSaludos,\nEquipo de Recreativos`;
+               
+               await sendPurchaseEmail(userData.email, subject, text);
             // Limpiar el carrito después de la compra exitosa
             const clearCartResponse = await this.clearCartProducts(cid);
             if (clearCartResponse.status !== 200) {
