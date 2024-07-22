@@ -16,8 +16,12 @@ class CartsManager {
         }
     
         const cart = cartResponse.payload;
+        if (cart.products.length === 0) {
+            return { status: 400, error: 'No hay productos en el carrito para comprar' };
+        }
+    
         const userData = user;
-        console.log('User data:', userData);
+        console.log('Datos del usuario:', userData);
         let ticketAmount = 0;
     
         for (let item of cart.products) {
@@ -36,9 +40,6 @@ class CartsManager {
                 const quantityUpdated = productStock - requestedQuantity;
                 await this.productModel.findByIdAndUpdate(productId, { stock: quantityUpdated }, { new: true });
     
-                // Eliminar el producto del carrito
-                await this.removeProductFromCart(cid, productId);
-    
                 // Generar el ticket de compra
                 ticketAmount += requestedQuantity * product.price;
     
@@ -48,7 +49,12 @@ class CartsManager {
     
                 // Dejar la cantidad no comprada en el carrito
                 const quantityNotPurchased = requestedQuantity - productStock;
-                await this.updateProduct(cid, productId, quantityNotPurchased);
+    
+                // Si no se puede actualizar el producto en el carrito, retorna un error
+                const updateResponse = await this.updateProduct(cid, productId, quantityNotPurchased);
+                if (updateResponse.status !== 200) {
+                    return { status: 500, error: 'Error actualizando la cantidad del producto en el carrito' };
+                }
     
                 // Generar el ticket con la cantidad comprada
                 ticketAmount += productStock * product.price;
@@ -62,12 +68,22 @@ class CartsManager {
                 purchaser: userData.email
             };
             const ticketFinished = await TicketModel.create(ticket);
-            console.log('Ticket created:', ticketFinished);
+            console.log('Ticket creado:', ticketFinished);
+    
+            // Limpiar el carrito después de la compra exitosa
+            const clearCartResponse = await this.clearCartProducts(cid);
+            if (clearCartResponse.status !== 200) {
+                console.error("Error limpiando los productos del carrito:", clearCartResponse.error);
+                return { status: 500, error: 'Error limpiando los productos del carrito después de la compra' };
+            }
+    
             return { status: 200, payload: ticketFinished };
         }
     
-        return { status: 404, error: 'No products purchased' };
+        // Si no se compró ningún producto, simplemente retorna un mensaje indicando que no se pudo procesar la compra
+        return { status: 400, error: 'No se pudo completar la compra, por favor verifique la disponibilidad de los productos' };
     };
+
     async getAll() {
         try {
             const carts = await this.cartModel.find().populate('_user_id').populate('products._id').lean();
