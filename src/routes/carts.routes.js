@@ -33,28 +33,7 @@ router.delete('/:id/products', verifyToken, clearCartProducts);
 router.delete('/:id/products/:productId', verifyToken, removeProductFromCart);
 
 // Ruta para comprar el carrito
-router.get('/:cartId/purchase', verifyToken, async (req, res) => {
-    const { cartId } = req.params;
-    const user = req.user;
-
-    if (!cartId || !user) {
-        return res.status(400).send({ error: 'Cart ID or user is missing' });
-    }
-
-    try {
-        // Ejecutar la validación y compra
-        const result = await cartsManager.purchaseCart(cartId, user);
-
-        if (result.status === 200) {
-            return res.status(200).send(result.payload);
-        } else {
-            return res.status(result.status).send({ error: result.error });
-        }
-    } catch (error) {
-        console.error('Error in purchaseCart:', error);
-        return res.status(500).send({ error: 'Internal Server Error' });
-    }
-});
+router.get('/:cartId/purchase', verifyToken, purchaseCart);
 
 // Rutas protegidas para administradores
 router.put('/:id', verifyToken, handlePolicies(['admin']), updateCart);

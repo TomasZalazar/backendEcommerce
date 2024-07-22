@@ -7,7 +7,7 @@ const service = new CartsManager(cartModel, userModel);
 
 
 
-export const purchaseCart = async (req, res) => {
+export const purchaseCart =  async (req, res) => {
     const { cartId } = req.params;
     const user = req.user;
 
@@ -16,11 +16,17 @@ export const purchaseCart = async (req, res) => {
     }
 
     try {
-        const result = await service.validationPurchase(cartId, user); // Asegúrate de que `service` esté correctamente importado y tenga el método `purchaseCart`
-        res.status(result.status).send(result.payload || { error: result.error });
+        // Ejecutar la validación y compra
+        const result = await service.purchaseCart(cartId, user);
+
+        if (result.status === 200) {
+            return res.status(200).send(result.payload);
+        } else {
+            return res.status(result.status).send({ error: result.error });
+        }
     } catch (error) {
-        console.error("Error in purchaseCart:", error); // Agrega logging para depuración
-        res.status(500).send({ error: 'Internal Server Error' });
+        console.error('Error in purchaseCart:', error);
+        return res.status(500).send({ error: 'Internal Server Error' });
     }
 };
 
@@ -60,7 +66,7 @@ export const addProductToCart = async (req, res) => {
     const { cartId, productId } = req.params;
     const { qty } = req.body;
 
-    console.log(req.params)
+    
     try {
         const product = await ProductModel.findById(productId);
         if (!product) {
