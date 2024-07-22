@@ -7,6 +7,7 @@ import handlebars from 'express-handlebars'
 import session from 'express-session'
 import passport from 'passport'
 import MongoStore from 'connect-mongo'
+import cors from 'cors'
 
 // routes
 
@@ -42,7 +43,7 @@ const expressInstance = app.listen(config.PORT, async () => {
         store: MongoStore.create({ mongoUrl: config.MONGODB_URI, ttl: 600 }),
         secret: config.SECRET,
         resave: false,
-        saveUninitialized: true
+        saveUninitialized: false
     }));
      // inicializar Passport y sesiones de Passport
     initAuthStrategies();
@@ -54,7 +55,8 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.set('views', `${config.DIRNAME}/views`);
     app.set('view engine', 'handlebars');
     app.use('/static', express.static(`${config.DIRNAME}/public`))
-
+    // Habilita CORS
+    app.use(cors()); 
     // endpoints
     app.use('/api/products', productsRoutes)
     app.use('/api/users', usersRoutes)

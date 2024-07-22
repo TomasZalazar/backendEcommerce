@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import  config  from '../config.js';
 
+
 export const createHash = password => bcrypt.hashSync(password, bcrypt.genSaltSync(10));
 
 export const isValidPassword = (passwordToVerify, storedHash) => bcrypt.compareSync(passwordToVerify, storedHash);
@@ -15,7 +16,6 @@ export const verifyToken = (req, res, next) => {
     const receivedToken = headerToken || cookieToken || queryToken;
 
     if (!receivedToken) return res.status(401).send({ origin: config.SERVER, payload: 'Se requiere token' });
-
     jwt.verify(receivedToken, config.SECRET, (err, payload) => {
         if (err) return res.status(403).send({ origin: config.SERVER, payload: 'Token no válido' });
         req.user = payload;

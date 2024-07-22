@@ -3,61 +3,71 @@ import cartModel from '../models/carts.model.js';
 import userModel from '../models/users.model.js';
 import ProductModel from '../models/products.model.js';
 
-const cartsManager = new CartsManager(cartModel, userModel);
+const service = new CartsManager(cartModel, userModel);
 
 
 
 export const purchaseCart = async (req, res) => {
     const { cartId } = req.params;
-    const userEmail = req.user.email; 
-    console.log(userEmail)// Asumiendo que el email del usuario está en req.user
+    const user = req.user;
 
-    const result = await cartsManager.purchaseCart(cartId, userEmail, req);
-    res.status(result.status).send(result.payload || { error: result.error });
+    if (!cartId || !user) {
+        return res.status(400).send({ error: 'Cart ID or user is missing' });
+    }
+
+    try {
+        const result = await service.validationPurchase(cartId, user); // Asegúrate de que `service` esté correctamente importado y tenga el método `purchaseCart`
+        res.status(result.status).send(result.payload || { error: result.error });
+    } catch (error) {
+        console.error("Error in purchaseCart:", error); // Agrega logging para depuración
+        res.status(500).send({ error: 'Internal Server Error' });
+    }
 };
 
 export const getAllCarts = async (req, res) => {
-    const result = await cartsManager.getAll();
+    const result = await service.getAll();
     res.status(result.status).send(result.payload || { error: result.error });
 };
 
 export const getCartById = async (req, res) => {
     const { id } = req.params;
-    const result = await cartsManager.getById(id);
+    const result = await service.getById(id);
     res.status(result.status).send(result.payload || { error: result.error });
 };
 
 
 export const createCart = async (req, res) => {
     const { userId, products } = req.body;
-    const result = await cartsManager.createCart(userId, products);
+    const result = await service.createCart(userId, products);
     res.status(result.status).send(result.payload || { error: result.error });
 };
 
 export const updateCart = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
-    const result = await cartsManager.updateCart(id, updateData);
+    const result = await service.updateCart(id, updateData);
     res.status(result.status).send(result.payload || { error: result.error });
 };
 
 export const deleteCart = async (req, res) => {
     const { id } = req.params;
-    const result = await cartsManager.deleteCart(id);
+    const result = await service.deleteCart(id);
     res.status(result.status).send(result.payload || { error: result.error });
 };
 
 
 export const addProductToCart = async (req, res) => {
-    const { cartid, productId } = req.params;
+    const { cartId, productId } = req.params;
     const { qty } = req.body;
+
+    console.log(req.params)
     try {
         const product = await ProductModel.findById(productId);
         if (!product) {
             return res.status(404).send({ error: 'Product not found' });
         }
 
-        const result = await cartsManager.addProductToCart(cartid, productId, qty);
+        const result = await service.addProductToCart(cartId, productId, qty);
         res.status(result.status).send(result.payload || { error: result.error });
     } catch (error) {
         console.error("Error adding product to cart:", error);
@@ -67,12 +77,12 @@ export const addProductToCart = async (req, res) => {
 
 export const removeProductFromCart = async (req, res) => {
     const { id, productId } = req.params;
-    const result = await cartsManager.removeProductFromCart(id, productId);
+    const result = await service.removeProductFromCart(id, productId);
     res.status(result.status).send(result.payload || { error: result.error });
 };
 
 export const clearCartProducts = async (req, res) => {
     const { id } = req.params;
-    const result = await cartsManager.clearCartProducts(id);
+    const result = await service.clearCartProducts(id);
     res.status(result.status).send(result.payload || { error: result.error });
 };
