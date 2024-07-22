@@ -29,9 +29,11 @@ const config = {
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
     GITHUB_CALLBACK_URL: process.env.GITHUB_CALLBACK_URL,
+    GOOGLE_USER:"locoarts123@gmail.com",
+    GOOGLE_APLICATION_PASSWORD:"qcpd ocvu quct tdcv",
 
-    GOOGLE_USER: process.env.GOOGLE_USER,
-    GOOGLE_APLICATION_PASSWORD: process.env.GOOGLE_APLICATION_PASSWORD,
+    // GOOGLE_USER: process.env.GOOGLE_USER,
+    // GOOGLE_APLICATION_PASSWORD: process.env.GOOGLE_APLICATION_PASSWORD,
 };
 
 export default config
