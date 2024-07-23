@@ -45,3 +45,12 @@ export const handlePolicies = policies => {
         res.status(403).send({ origin: config.SERVER, payload: 'No tiene permisos para acceder al recurso' });
     }
 }
+
+export const errorHandler = (err, req, res, next) => {
+    if (err) {
+        const { message, statusCode } = err;
+        res.status(statusCode).json({ error: message });
+    } else {
+        next();
+    }
+};

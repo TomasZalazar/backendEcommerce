@@ -92,10 +92,10 @@ router.post('/jwtlogin', verifyRequiredBody(['email', 'password']), passport.aut
 router.get('/current', passport.authenticate('current', { failureRedirect: `/current?error=${encodeURI('No hay un token registrado')}`}), async (req, res) => {
     try {
         const currentToken = req.user // Asumiendo que req.user ya contiene los datos que quieres enviar
-        
-        res.status(200).json({ payload: currentToken });
+        const { password, role, _id, ...filteredCurrent } = currentToken;
+        res.status(200).send({ payload: filteredCurrent });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).send({ error: error.message });
     }
 });
 

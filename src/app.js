@@ -20,6 +20,7 @@ import initAuthStrategies from './auth/passport.strategies.js'
 import authRoutes from './routes/auth.routes.js'
 import initSocket from './services/initSocket.js'
 import MongoSingleton from './services/mongo.singleton.js'
+import { errorHandler } from './services/utils.js';
 const app = express()
 
 
@@ -62,6 +63,8 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.use('/api/users', usersRoutes)
     app.use('/api/cart', cartRoutes)
     app.use('/api/auth', authRoutes)
+     // Middleware de manejo de errores
+     app.use(errorHandler);
 
     // views    
     app.use('/', viewsRoutes)

@@ -148,30 +148,6 @@ const initAuthStrategies = () => {
         }
     ));
 
-
-    passport.use('jwt-current', new jwtStrategy(
-        {
-
-            jwtFromRequest: jwtExtractor.fromExtractors([cookieExtractor]),
-            secretOrKey: config.SECRET
-        },
-        async (jwtPayload, done) => {
-            try {
-                console.log(`JWT Payload: ${JSON.stringify(jwtPayload)}`)
-                const user = await userModel.findById(jwtPayload.id);
-                console.log(user)
-                if (user) {
-                    return done(null, user);
-                } else {
-                    return done(null, false);
-                }
-            } catch (err) {
-                return done(err, false);
-            }
-        }
-    ));
-
-
     passport.serializeUser((user, done) => {
         const userId = user._id || user.payload?._id;
         if (userId) {
