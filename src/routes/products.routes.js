@@ -5,6 +5,7 @@ import config from '../config.js';
 import { handlePolicies, verifyRequiredBody, verifyToken } from '../services/utils.js';
 import { generateMockProducts } from '../mocking.js';
 
+
 const router = Router();
 
 router.param('id', async (req, res, next, id) => {
@@ -30,7 +31,7 @@ router.get('/mockingproducts/:qty', (req, res) => {
     res.json(mockProducts);
 });
 // Rutas protegidas para administradores
-router.post('/', verifyToken, handlePolicies(['admin']), verifyRequiredBody(['title', 'description', 'price', 'stock', 'category']), uploader.array('thumbnails', 4), createProduct);
+router.post('/create', verifyToken, handlePolicies(['admin']), verifyRequiredBody(['title', 'description', 'price', 'stock', 'category']), uploader.array('thumbnails', 4), createProduct);
 router.put('/:id', verifyToken, handlePolicies(['admin']), updateProduct);
 router.delete('/:id', verifyToken, handlePolicies(['admin']), deleteProduct);
 

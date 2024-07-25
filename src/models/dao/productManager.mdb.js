@@ -16,7 +16,7 @@ class ProductManager {
             const products = await this.ProductModel.findOne(filter).lean();
             return { status: 200, origin: 'DAO', payload: products };
         } catch (err) {
-            return { status: 500, origin: 'DAO', payload: { error: error.message } };
+            return { status: 500, origin: 'DAO', payload: { error: err.message } };
         };
     };
 

@@ -40,7 +40,7 @@ export const createProduct = async (req, res) => {
             category,
             thumbnails: thumbnails || []
         };
-        const addedProduct = await ProductModel.create(newProduct);
+        const addedProduct = await ProductManager.create(newProduct);
         res.status(201).json(addedProduct);
     } catch (error) {
         res.status(500).json({ error: error.message });

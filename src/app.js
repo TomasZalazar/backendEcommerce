@@ -20,7 +20,8 @@ import initAuthStrategies from './auth/passport.strategies.js'
 import authRoutes from './routes/auth.routes.js'
 import initSocket from './services/initSocket.js'
 import MongoSingleton from './services/mongo.singleton.js'
-import { errorHandler } from './services/utils.js';
+import errorsHandler from './services/errors.handler.js'
+import cookieRouter from './routes/cookies.routes.js'
 const app = express()
 
 
@@ -38,6 +39,7 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
     app.use(cookieParser(config.SECRET));
+    
     //sessions
     app.use(session({
         // store: new fileStorage({ path: './sessions', ttl: 100, retries: 0 }),
@@ -63,11 +65,13 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.use('/api/users', usersRoutes)
     app.use('/api/cart', cartRoutes)
     app.use('/api/auth', authRoutes)
+    app.use('/api/cookies', cookieRouter);
      // Middleware de manejo de errores
-     app.use(errorHandler);
-
-    // views    
-    app.use('/', viewsRoutes)
-
+     
+     
+     // views    
+     app.use('/', viewsRoutes)
+     
+     app.use(errorsHandler);
 
 })
