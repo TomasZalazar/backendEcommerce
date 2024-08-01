@@ -1,18 +1,34 @@
 import config, { errorsDictionary } from '../config.js';
+import CustomError from './CustomError.class.js';
 
 const errorsHandler = (error, req, res, next) => {
-    let customErr = errorsDictionary.UNHANDLED_ERROR; // Error por defecto
+    let customErr = errorsDictionary.UNHANDLED_ERROR;
 
-    // Verifica que el error tenga la estructura esperada
-    if (error && error.type && typeof error.type.code !== 'undefined') {
-        const errorCode = error.type.code;
-        customErr = Object.values(errorsDictionary).find(err => err.code === errorCode) || customErr;
+    // Si el error es una instancia de CustomError, busca el error correspondiente en errorsDictionary
+    if (error instanceof CustomError) {
+        customErr = Object.values(errorsDictionary).find(err => err.code === error.code) || customErr;
     }
 
-    // Log de la respuesta para verificar
-    console.log(`Enviando respuesta de error: ${customErr.status} - ${customErr.message}`);
+    // Registra el error en el logger si está disponible
+    if (req.logger) {
+        if ([2, 3, 4, 5, 27].includes(customErr.code)) {
+            req.logger.warn(`${customErr.message}`);
+        } else if ([12, 13, 28, 29, 30].includes(customErr.code)) {
+            req.logger.error(`${customErr.message}`);
+        } else if ([14, 20, 24].includes(customErr.code)) {
+            req.logger.warn(`${customErr.message}`);
+        } else if (customErr.code >= 8 && customErr.code <= 26) {
+            req.logger.error(`${customErr.message}`);
+        } else {
+            req.logger.error(`${customErr.message}`);
+        }
+    } else {
+        // Respaldo si no hay logger disponible
+        console.log(`Error: ${customErr.message}`);
+    }
 
-    return res.status(customErr.status).send({
+    // Enviar la respuesta al cliente
+    res.status(customErr.status).send({
         origin: config.SERVER,
         payload: '',
         error: customErr.message

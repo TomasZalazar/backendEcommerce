@@ -1,0 +1,63 @@
+config:
+  target: 'http://localhost:4000'
+  phases:
+    - duration: 5 # duración total 20 segundos
+      arrivalRate: 1 # 5 usuarios virtuales por segundo
+  plugins:
+    metrics-by-endpoint: {}
+
+scenarios:
+  - name: "Flujo de Sesiones (registro + login)"
+    flow:
+      - log: "Creando variables para el usuario"
+      - post:
+          url: '/api/auth/register'
+          json:
+            firstName: "Juan"
+            lastName: "Pérez"
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.email"
+              as: "email"
+            - json: "$.password"
+              as: "password"
+      - think: 2
+      - log: "Iniciando sesión del usuario"
+      - post:
+          url: '/api/auth/login'
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - log: "Token capturado: {{ token }}"
+
+  - name: "Registro Fallido (Usuario Existente)"
+    flow:
+      - log: "Intentando registrar un usuario que ya existe"
+      - post:
+          url: '/api/auth/register'
+          json:
+            firstName: "Juan"
+            lastName: "Pérez"
+            email: "juan.perez@example.com"
+            password: "contraseña123"
+      - expect:
+          statusCode: 400
+          body:
+            error: "El usuario ya existe"
+
+  - name: "Inicio de Sesión Fallido (Credenciales Incorrectas)"
+    flow:
+      - log: "Intentando iniciar sesión con credenciales incorrectas"
+      - post:
+          url: '/api/auth/login'
+          json:
+            email: "juan.perez@example.com"
+            password: "incorrecta"
+      - expect:
+          statusCode: 401
+          body:
+            error: "Usuario o clave no válidos"

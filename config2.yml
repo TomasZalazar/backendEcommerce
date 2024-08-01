@@ -1,0 +1,39 @@
+config:
+  plugins:
+    metrics-by-endpoint: {}
+  target: 'http://localhost:4000'
+  phases:
+    - duration: 5
+      arrivalRate: 1  # Ajusta la tasa de llegada según sea necesario
+
+scenarios:
+  - name: "Register and Login Flow"
+    flow:
+      - log: "Creating variables for user"
+      - get:
+          url: '/api/test/user'
+          capture:
+            - json: "$.first_name"
+              as: "first_name"
+            - json: "$.last_name"
+              as: "last_name"
+            - json: "$.email"
+              as: "email"
+            - json: "$.password"
+              as: "password"
+      - log: "Registering user"
+      - post:
+          url: "/api/auth/register"
+          json:
+            firstName: "{{ first_name }}"
+            lastName: "{{ last_name }}"
+            email: "{{ email }}"
+            password: "{{ password }}"
+      - log: "Waiting before login"
+      - think: 2  # Pausa de 2 segundos para simular tiempo de espera
+      - log: "Logging in user"
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"

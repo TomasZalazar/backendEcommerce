@@ -1,7 +1,7 @@
 import productModel from "../products.model.js";
 import config from '../../config.js';
 import TicketModel from "../tickets.model.js";
-import { sendPurchaseEmail } from "../../services/emaiilService.js";
+import { sendPurchaseEmail } from "../../services/emailService.js";
 
 class CartsManager {
     constructor(cartModel, userModel) {

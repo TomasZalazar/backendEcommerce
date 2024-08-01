@@ -20,7 +20,8 @@ export default class MongoSingleton {
        |                                             |
        |   Server : on  http://localhost:${config.PORT}/login  |
        |                                             |
-       |   BBDD : on      MONGODB                    |
+       |   BBDD : MONGODB                            |
+       |   MODE : ${config.MODE}                               |
        |                                             |
        +---------------------------------------------+
        `);

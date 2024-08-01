@@ -1,3 +1,6 @@
+import mongoose from 'mongoose';
+import { errorsDictionary } from '../../config.js';
+
 class ProductManager {
     constructor(ProductModel) {
         this.ProductModel = ProductModel;
@@ -8,28 +11,37 @@ class ProductManager {
             const products = await this.ProductModel.find().limit(limit);
             return { status: 200, origin: 'DAO', payload: products };
         } catch (error) {
-            return { status: 500, origin: 'DAO', payload: { error: error.message } };
+            return { status: 500, origin: 'DAO', payload: { error: errorsDictionary.UNHANDLED_ERROR } };
         }
     }
-    async  getOne(filter){
+
+    async getOne(filter) {
         try {
-            const products = await this.ProductModel.findOne(filter).lean();
-            return { status: 200, origin: 'DAO', payload: products };
-        } catch (err) {
-            return { status: 500, origin: 'DAO', payload: { error: err.message } };
-        };
-    };
+            const product = await this.ProductModel.findOne(filter).lean();
+            if (product) {
+                return { status: 200, origin: 'DAO', payload: product };
+            } else {
+                return { status: 404, origin: 'DAO', payload: { error: errorsDictionary.PRODUCT_NOT_FOUND } };
+            }
+        } catch (error) {
+            return { status: 500, origin: 'DAO', payload: { error: errorsDictionary.UNHANDLED_ERROR } };
+        }
+    }
 
     async getById(id) {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return { status: 400, origin: 'DAO', payload: { error: errorsDictionary.INVALID_MONGOID_FORMAT } };
+        }
+
         try {
             const product = await this.ProductModel.findById(id);
             if (product) {
                 return { status: 200, origin: 'DAO', payload: product };
             } else {
-                return { status: 404, origin: 'DAO', payload: { error: 'Product not found' } };
+                return { status: 404, origin: 'DAO', payload: { error: errorsDictionary.ID_NOT_FOUND } };
             }
         } catch (error) {
-            return { status: 500, origin: 'DAO', payload: { error: error.message } };
+            return { status: 500, origin: 'DAO', payload: { error: errorsDictionary.UNHANDLED_ERROR } };
         }
     }
 
@@ -39,33 +51,41 @@ class ProductManager {
             await newProduct.save();
             return { status: 201, origin: 'DAO', payload: newProduct };
         } catch (error) {
-            return { status: 500, origin: 'DAO', payload: { error: error.message } };
+            return { status: 500, origin: 'DAO', payload: { error: errorsDictionary.RECORD_CREATION_ERROR } };
         }
     }
 
     async update(id, productData) {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return { status: 400, origin: 'DAO', payload: { error: errorsDictionary.INVALID_MONGOID_FORMAT } };
+        }
+
         try {
             const updatedProduct = await this.ProductModel.findByIdAndUpdate(id, productData, { new: true });
             if (updatedProduct) {
                 return { status: 200, origin: 'DAO', payload: updatedProduct };
             } else {
-                return { status: 404, origin: 'DAO', payload: { error: 'Product not found' } };
+                return { status: 404, origin: 'DAO', payload: { error: errorsDictionary.ID_NOT_FOUND } };
             }
         } catch (error) {
-            return { status: 500, origin: 'DAO', payload: { error: error.message } };
+            return { status: 500, origin: 'DAO', payload: { error: errorsDictionary.UNHANDLED_ERROR } };
         }
     }
 
     async delete(id) {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return { status: 400, origin: 'DAO', payload: { error: errorsDictionary.INVALID_MONGOID_FORMAT } };
+        }
+
         try {
             const deletedProduct = await this.ProductModel.findByIdAndDelete(id);
             if (deletedProduct) {
                 return { status: 200, origin: 'DAO', payload: deletedProduct };
             } else {
-                return { status: 404, origin: 'DAO', payload: { error: 'Product not found' } };
+                return { status: 404, origin: 'DAO', payload: { error: errorsDictionary.ID_NOT_FOUND } };
             }
         } catch (error) {
-            return { status: 500, origin: 'DAO', payload: { error: error.message } };
+            return { status: 500, origin: 'DAO', payload: { error: errorsDictionary.UNHANDLED_ERROR } };
         }
     }
 
@@ -80,7 +100,7 @@ class ProductManager {
             
             return { status: 200, origin: 'DAO', payload: result };
         } catch (error) {
-            return { status: 500, origin: 'DAO', payload: { error: error.message } };
+            return { status: 500, origin: 'DAO', payload: { error: errorsDictionary.UNHANDLED_ERROR } };
         }
     }
 }

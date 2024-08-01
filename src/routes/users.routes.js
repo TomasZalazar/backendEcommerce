@@ -6,11 +6,12 @@ import config from '../config.js';
 
 const router = Router();
 router.param('id', async (req, res, next, id) => {
-    if (!config.MONGODB_ID_REGEX.test(req.params.id)) {
+    if (!config.MONGODB_ID_REGEX.test(id)) {
+        req.logger.error('Id no válido');
         return res.status(400).send({ origin: config.SERVER, payload: null, error: 'Id no válido' });
     }
     next();
-})
+});
 // Rutas públicas
 router.get('/', getUsers);
 router.get('/:id', getUserById);

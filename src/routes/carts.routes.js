@@ -1,21 +1,25 @@
 import { Router } from 'express';
 import { getAllCarts, getCartById, createCart, updateCart, deleteCart, addProductToCart, removeProductFromCart, clearCartProducts, purchaseCart } from '../controllers/carts.controller.js';
 import { handlePolicies, verifyToken } from '../services/utils.js';
-import { passportCall } from '../auth/passport.strategies.js';
+
 import config from '../config.js';
-import CartsManager from '../models/dao/cartManager.mdb.js';
-import cartModel from '../models/carts.model.js';
-import userModel from '../models/users.model.js';
-import productModel from '../models/products.model.js';
+
 
 const router = Router();
-const cartsManager = new CartsManager(cartModel, userModel, productModel);
+
 router.param('id', async (req, res, next, id) => {
-    if (!config.MONGODB_ID_REGEX.test(req.params.id)) {
-        return res.status(400).send({ origin: config.SERVER, payload: null, error: 'Id no válido' });
-    }
-    next();
-})
+    if (!config.MONGODB_ID_REGEX.test(id)) {
+        // Registra el error usando Winston
+       
+       // Crea el error personalizado y pásalo al middleware de errores
+       const error = new CustomError(
+        errorsDictionary.INVALID_MONGOID_FORMAT,
+        `Id no válido: ${id} - ${errorsDictionary.INVALID_MONGOID_FORMAT.message}`
+    );
+    return next(error); // Pasar el error al middleware de manejo de errores
+}
+next();
+});
 router.param('productId', async (req, res, next, id) => {
     if (!config.MONGODB_ID_REGEX.test(req.params.productId)) {
         return res.status(400).send({ origin: config.SERVER, payload: null, error: 'Id del producto no válido' });
