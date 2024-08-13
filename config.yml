@@ -1,63 +1,77 @@
 config:
   target: 'http://localhost:4000'
   phases:
-    - duration: 5 # duración total 20 segundos
-      arrivalRate: 1 # 5 usuarios virtuales por segundo
+    - duration: 2 # duración total 5 segundos
+      arrivalRate: 1 # 1 usuario virtual por segundo
   plugins:
     metrics-by-endpoint: {}
 
 scenarios:
-  - name: "Flujo de Sesiones (registro + login)"
+  - name: "Autenticación de usuario"
     flow:
-      - log: "Creando variables para el usuario"
+      - log: "Registrando usuario"
       - post:
-          url: '/api/auth/register'
+          url: "/api/auth/register"
           json:
-            firstName: "Juan"
-            lastName: "Pérez"
-            email: "{{ email }}"
-            password: "{{ password }}"
-          capture:
-            - json: "$.email"
-              as: "email"
-            - json: "$.password"
-              as: "password"
-      - think: 2
+            firstName: "Tomas"
+            lastName: "Zalazar"
+            email: "tomaszalazar@gmail.com"
+            password: "tomaszalazar"
+          validate:
+            - statusCode:
+                - 201
+            - body:
+                - contains: "Usuario registrado exitosamente"
+
+      - think: 2 # Espera de 2 segundos entre operaciones
+      
       - log: "Iniciando sesión del usuario"
       - post:
-          url: '/api/auth/login'
+          url: "/api/auth/login"
           json:
-            email: "{{ email }}"
-            password: "{{ password }}"
-          capture:
-            - json: "$.token"
-              as: "token"
-      - log: "Token capturado: {{ token }}"
+            email: "tomaszalazar@gmail.com"
+            password: "tomaszalazar"
+          validate:
+            - statusCode:
+                - 200
+            - body:
+                - contains: "Inicio de sesión exitoso"
 
-  - name: "Registro Fallido (Usuario Existente)"
-    flow:
-      - log: "Intentando registrar un usuario que ya existe"
+      - think: 2
+      
+      - log: "Iniciando sesión con JWT"
       - post:
-          url: '/api/auth/register'
+          url: "/api/auth/jwtlogin"
           json:
-            firstName: "Juan"
-            lastName: "Pérez"
-            email: "juan.perez@example.com"
-            password: "contraseña123"
-      - expect:
-          statusCode: 400
-          body:
-            error: "El usuario ya existe"
+            email: "tomaszalazar@gmail.com"
+            password: "tomaszalazar"
+          validate:
+            - statusCode:
+                - 200
+            - body:
+                - contains: "Inicio de sesión exitoso"
+          extract:
+            json:
+              token: "token"
 
-  - name: "Inicio de Sesión Fallido (Credenciales Incorrectas)"
-    flow:
-      - log: "Intentando iniciar sesión con credenciales incorrectas"
-      - post:
-          url: '/api/auth/login'
-          json:
-            email: "juan.perez@example.com"
-            password: "incorrecta"
-      - expect:
-          statusCode: 401
-          body:
-            error: "Usuario o clave no válidos"
+      - think: 2
+      
+      - log: "Consultando información del usuario actual"
+      - get:
+          url: "/api/auth/current"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          validate:
+            - statusCode:
+                - 200
+            - body:
+                - contains: "user"
+
+      - think: 2
+      
+      - log: "Cerrando sesión del usuario"
+      - get:
+          url: "/api/auth/logout"
+          validate:
+            - statusCode:
+                - 200

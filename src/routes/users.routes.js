@@ -22,7 +22,9 @@ router.post('/create', verifyRequiredBody(['firstName', 'lastName', 'email', 'pa
 // Rutas protegidas para administradores
 router.put('/:id', verifyToken, handlePolicies(['admin']), updateUser);
 router.delete('/:id', verifyToken, handlePolicies(['admin']), deleteUser);
+
 router.get('/aggregate/:role', verifyToken, handlePolicies(['admin']), aggregateUsers);
 router.get('/paginate/:page/:limit', verifyToken, paginateUsers);
+
 
 export default router;

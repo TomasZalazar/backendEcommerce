@@ -1,7 +1,5 @@
 // dependencias
 import express from 'express'
-import mongoose from 'mongoose'
-import logger from 'morgan'
 import cookieParser from 'cookie-parser'
 import handlebars from 'express-handlebars'
 import session from 'express-session'
@@ -22,10 +20,9 @@ import initSocket from './services/initSocket.js'
 import MongoSingleton from './services/mongo.singleton.js'
 import errorsHandler from './services/errors.handler.js'
 import cookieRouter from './routes/cookies.routes.js'
-import protectedRoutes from './routes/protected.routes.js'
+import protectedRoutes from './routes/recover.routes.js'
 
 import { addLogger, logHttpRequests }  from './services/logger.js'
-import CustomError from './services/CustomError.class.js'
 
 const app = express()
 
@@ -57,6 +54,7 @@ const expressInstance = app.listen(config.PORT, async () => {
     initAuthStrategies();
     app.use(passport.initialize())
     app.use(passport.session())
+    
 
     // motor plantilla config 
     app.engine('handlebars', handlebars.engine());
@@ -64,39 +62,20 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.set('view engine', 'handlebars');
     // Habilita CORS
     app.use(cors({
-        origin: '*'
+        origin: 'http://localhost:4000',
+        credentials: true
     }));
     
     app.use(addLogger)
     app.use(logHttpRequests)
-    app.get('/loggerTest', (req, res) => {
-        try {
-            req.logger.debug('Este es un mensaje de debug');
-            req.logger.http('Este es un mensaje http');
-            req.logger.info('Este es un mensaje info');
-            req.logger.warn('Este es un mensaje warning');
-            req.logger.error('Este es un mensaje error');
-            req.logger.fatal('Este es un mensaje fatal');
-        
-            res.send('Prueba de logger realizada');
-        } catch (error) {
-            req.logger.error('Error en /loggerTest: ', error);
-            res.status(500).send('Error en /loggerTest');
-        }
-    });
-    app.get('/test-error', (req, res, next) => {
-        // Probar con un código de error diferente
-        const error = new CustomError({ code: 8, status: 404, message: 'error creado por mi' });
-        next(error);
-    });
-    console.log(`Logger en modo: ${config.MODE}`);
+  
     // endpoints
     app.use('/api/products', productsRoutes)
     app.use('/api/users', usersRoutes)
     app.use('/api/cart', cartRoutes)
     app.use('/api/auth', authRoutes)
     app.use('/api/cookies', cookieRouter);
-    app.use('/api/protected', protectedRoutes);
+    app.use('/api/recover', protectedRoutes);
 
     
     app.use('/static', express.static(`${config.DIRNAME}/public`))

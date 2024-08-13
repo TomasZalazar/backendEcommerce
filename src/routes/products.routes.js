@@ -25,10 +25,19 @@ next();
 });
 
 
+
 // Rutas públicas
 router.get('/paginate', paginateProducts);
 router.get('/', getAllProducts);
 router.get('/:id', getProductById);
+
+// Rutas protegidas para administradores
+router.post('/create', verifyToken,handlePolicies(['admin','premium']), verifyRequiredBody(['title', 'description', 'price', 'stock', 'category']), uploader.array('thumbnails', 4), createProduct);
+
+
+router.put('/:id', verifyToken, handlePolicies(['admin']), updateProduct);
+router.delete('/:id', verifyToken, handlePolicies(['admin','premium']), deleteProduct);
+
 
 // Endpoint de mocking con qty como parámetro de ruta
 router.get('/mockingproducts/:qty', (req, res, next) => {
@@ -43,9 +52,4 @@ router.get('/mockingproducts/:qty', (req, res, next) => {
     const mockProducts = generateMockProducts(qty);
     res.json(mockProducts);
 });
-// Rutas protegidas para administradores
-router.post('/create', verifyToken, handlePolicies(['admin']), verifyRequiredBody(['title', 'description', 'price', 'stock', 'category']), uploader.array('thumbnails', 4), createProduct);
-router.put('/:id', verifyToken, handlePolicies(['admin']), updateProduct);
-router.delete('/:id', verifyToken, handlePolicies(['admin']), deleteProduct);
-
 export default router;

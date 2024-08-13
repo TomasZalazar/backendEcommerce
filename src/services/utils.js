@@ -15,6 +15,8 @@ export const verifyToken = (req, res, next) => {
     const cookieToken = req.cookies && req.cookies[`${config.APP_NAME}_cookie`] ? req.cookies[`${config.APP_NAME}_cookie`] : undefined;
     const queryToken = req.query.access_token ? req.query.access_token : undefined;
     const receivedToken = headerToken || cookieToken || queryToken;
+    // console.log(headerToken, 'esto es el token que viene x header')
+    // console.log(cookieToken, 'esto es el token que viene x cookies')
 
     if (!receivedToken) return res.status(401).send({ origin: config.SERVER, payload: 'Se requiere token' });
     jwt.verify(receivedToken, config.SECRET, (err, payload) => {
@@ -27,12 +29,22 @@ export const verifyToken = (req, res, next) => {
 
 export const verifyRequiredBody = (requiredFields) => {
     return (req, res, next) => {
-        const allOk = requiredFields.every(field =>
-            req.body.hasOwnProperty(field) && req.body[field] !== '' && req.body[field] !== null && req.body[field] !== undefined
+        // console.log('Campos requeridos:', requiredFields);
+        // console.log('Cuerpo de la solicitud:', req.body);
+
+        const missingFields = requiredFields.filter(field => 
+            !req.body.hasOwnProperty(field) || req.body[field] === '' || req.body[field] === null || req.body[field] === undefined
         );
 
-        // if (!allOk) return res.status(400).send({ origin: config.SERVER, payload: 'Faltan propiedades', requiredFields });
-        if (!allOk) throw new CustomError(errorsDictionary.FEW_PARAMETERS);
+        missingFields.forEach(field => {
+            console.log(`Campo: ${field}, Valor: ${req.body[field]}, Es faltante: ${!req.body.hasOwnProperty(field) || req.body[field] === '' || req.body[field] === null || req.body[field] === undefined}`);
+        });
+
+        if (missingFields.length > 0) {
+            console.log('Campos faltantes:', missingFields);
+            return next(new CustomError(errorsDictionary.FEW_PARAMETERS, { missingFields }));
+        }
+
         next();
     };
 };
@@ -42,10 +54,11 @@ export const verifyRequiredBody = (requiredFields) => {
 export const handlePolicies = policies => {
     return async (req, res, next) => {
         try {
+            // console.log(req.user)
             if (!req.user) {
                 throw new CustomError(errorsDictionary.UNAUTHORIZED);
             }
-
+            // console.log(req.user.role)
             if (policies.includes(req.user.role)) {
                 return next();
             } else {

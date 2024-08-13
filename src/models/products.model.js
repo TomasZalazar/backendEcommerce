@@ -11,7 +11,9 @@ const productSchema = new mongoose.Schema({
     code: { type: String, required: true },
     stock: { type: Number, required: true },
     thumbnails: { type: [String], default: [] },
-    category: { type: String, required: true }
+    category: { type: String, required: true },
+    // owner: { type: mongoose.Schema.Types.ObjectId, ref: 'users', default: 'admin' }, // por si quiero usar el ._id 
+    owner: { type: String, required: true, default: 'admin' },
 }, { timestamps: true });
 
 productSchema.plugin(mongoosePaginate);

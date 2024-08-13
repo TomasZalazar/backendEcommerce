@@ -27,6 +27,10 @@ const errorsHandler = (error, req, res, next) => {
         console.log(`Error: ${customErr.message}`);
     }
 
+     // Verifica si los encabezados ya han sido enviados
+     if (res.headersSent) {
+        return next(error); // Pasa el error al siguiente middleware
+    }
     // Enviar la respuesta al cliente
     res.status(customErr.status).send({
         origin: config.SERVER,

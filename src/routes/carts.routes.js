@@ -3,6 +3,7 @@ import { getAllCarts, getCartById, createCart, updateCart, deleteCart, addProduc
 import { handlePolicies, verifyToken } from '../services/utils.js';
 
 import config from '../config.js';
+import { passportCall } from '../auth/passport.strategies.js';
 
 
 const router = Router();
@@ -32,7 +33,7 @@ router.get('/:id', getCartById);
 
 // Rutas protegidas para usuarios autenticados
 router.post('/', verifyToken, createCart);
-router.post('/:cartId/products/:productId', addProductToCart);
+router.post('/:cartId/products/:productId',passportCall('jwtlogin'), addProductToCart);
 router.delete('/:id/products', verifyToken, clearCartProducts);
 router.delete('/:id/products/:productId', verifyToken, removeProductFromCart);
 

@@ -69,7 +69,7 @@
                 });
 
                 if (response.redirected) {
-                    window.location.href = response.url;
+                    window.location.href = '/realtimeproducts'
                 } else {
                     const data = await response.json();
                     console.error('Error:', data);

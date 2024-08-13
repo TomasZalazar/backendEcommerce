@@ -5,6 +5,13 @@ import { errorsDictionary } from '../config.js';
 
 const service = new ProductManager(ProductModel);
 
+export const checkOwnership = async (pid, email) => {
+    const product = await service.getById(pid);
+    if (!product) return false;
+    return product.owner === email;
+}
+
+
 export const getAllProducts = async (req, res, next) => {
     try {
         const limit = req.query.limit ? parseInt(req.query.limit) : 10;
@@ -40,18 +47,27 @@ export const createProduct = async (req, res, next) => {
     }
     
     const thumbnails = req.files ? req.files.map(file => file.filename) : [];
+
     try {
-        const newProduct = {
-            title,
-            description,
-            price,
-            code,
-            stock,
-            category,
-            thumbnails: thumbnails || []
-        };
-        const addedProduct = await service.create(newProduct);
-        res.status(201).json(addedProduct);
+        const user = req.user;
+
+        if(user.role === 'premium' || user.role === 'admin'){
+            const newProduct = {
+                title,
+                description,
+                price,
+                code,
+                stock,
+                category,
+                thumbnails: thumbnails || [],
+                owner: user.role === 'premium' ? user.email : 'admin'
+            };
+            
+            const addedProduct = await service.create(newProduct);
+            res.status(201).json(addedProduct);
+        }else {
+            return res.status(403).json({ error: 'No tienes permiso para crear productos.' });
+        }
     } catch (error) {
         next(new CustomError(errorsDictionary.PRODUCT_CREATE_ERROR));
     }
@@ -73,17 +89,35 @@ export const updateProduct = async (req, res, next) => {
 
 export const deleteProduct = async (req, res, next) => {
     try {
-        const id = req.params.id;
-        const result = await service.delete(id);
-        if (!result.payload) {
-            throw new CustomError(errorsDictionary.PRODUCT_NOT_FOUND);
+        const pid = req.params.pid;
+        const email = req.user.email;
+        let proceedWithDelete = true;
+
+        // Si el usuario es premium, verifica la propiedad del producto
+        if (req.user.role === 'premium') {
+            proceedWithDelete = await checkOwnership(pid, email);
         }
-        req.logger.info(`Producto eliminado con el id: ${id}`);
-        res.status(result.status).send({ origin: result.origin, payload: result.payload });
+
+        // Si el usuario tiene permiso para eliminar, procede a eliminar el producto
+        if (proceedWithDelete) {
+            const result = await service.delete(pid);
+            
+            if (!result.payload) {
+                throw new CustomError(errorsDictionary.PRODUCT_NOT_FOUND);
+            }
+
+            req.logger.info(`Producto eliminado con el id: ${pid}`);
+            res.status(200).send({ origin: config.SERVER, payload: 'Producto borrado' });
+        } else {
+            // Si el usuario no tiene permiso para eliminar el producto
+            res.status(403).send({ origin: config.SERVER, payload: null, error: 'No tiene permisos para borrar el producto' });
+        }
     } catch (error) {
         next(error instanceof CustomError ? error : new CustomError(errorsDictionary.PRODUCT_DELETE_ERROR));
     }
 };
+
+
 
 export const paginateProducts = async (req, res, next) => {
     try {
