@@ -1,16 +1,17 @@
 import ProductManager from '../models/dao/productManager.mdb.js';
 import ProductModel from '../models/products.model.js';
 import CustomError from '../services/CustomError.class.js'; // Asegúrate de tener esta clase para manejar los errores
-import { errorsDictionary } from '../config.js';
+import config, { errorsDictionary } from '../config.js';
 
 const service = new ProductManager(ProductModel);
 
+
 export const checkOwnership = async (pid, email) => {
-    const product = await service.getById(pid);
+    const result = await service.getById(pid);
+    const product = result.payload; 
     if (!product) return false;
     return product.owner === email;
-}
-
+};
 
 export const getAllProducts = async (req, res, next) => {
     try {
@@ -89,30 +90,36 @@ export const updateProduct = async (req, res, next) => {
 
 export const deleteProduct = async (req, res, next) => {
     try {
-        const pid = req.params.pid;
-        const email = req.user.email;
+        const { pid } = req.params;
+        const { email, role } = req.user;
+        // req.logger.info(`Intentando eliminar producto con id: ${pid} por usuario: ${email} con rol: ${role}`);
         let proceedWithDelete = true;
-
-        // Si el usuario es premium, verifica la propiedad del producto
-        if (req.user.role === 'premium') {
-            proceedWithDelete = await checkOwnership(pid, email);
+        // Verifica la existencia del producto antes de continuar
+        const product = await service.getById(pid);
+        if (!product) {
+            // req.logger.warn(`Producto no encontrado con id: ${pid}`);
+            throw new CustomError(errorsDictionary.PRODUCT_NOT_FOUND);
         }
-
+        // Si el usuario es premium, verifica la propiedad del producto
+        if (role === 'premium') {
+            proceedWithDelete = await checkOwnership(pid, email);
+            // req.logger.info(`¿El usuario es propietario del producto? ${proceedWithDelete}`);
+        }
         // Si el usuario tiene permiso para eliminar, procede a eliminar el producto
         if (proceedWithDelete) {
             const result = await service.delete(pid);
-            
             if (!result.payload) {
+                // req.logger.warn(`No se pudo eliminar el producto con id: ${pid} (No se encontró el payload)`);
                 throw new CustomError(errorsDictionary.PRODUCT_NOT_FOUND);
             }
-
-            req.logger.info(`Producto eliminado con el id: ${pid}`);
-            res.status(200).send({ origin: config.SERVER, payload: 'Producto borrado' });
+            req.logger.info(`Producto eliminado con éxito. ID: ${pid}`);
+            res.status(200).send({ origin: config.SERVER, payload: 'Producto eliminado' });
         } else {
-            // Si el usuario no tiene permiso para eliminar el producto
-            res.status(403).send({ origin: config.SERVER, payload: null, error: 'No tiene permisos para borrar el producto' });
+            // req.logger.warn(`El usuario: ${email} no tiene permisos para eliminar el producto con id: ${pid}`);
+            res.status(403).send({ origin: config.SERVER, payload: null, error: 'No tiene permisos para eliminar el producto' });
         }
     } catch (error) {
+        req.logger.error(`Error al eliminar el producto: ${error.message}`);
         next(error instanceof CustomError ? error : new CustomError(errorsDictionary.PRODUCT_DELETE_ERROR));
     }
 };

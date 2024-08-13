@@ -21,6 +21,12 @@ router.param('id', async (req, res, next, id) => {
 }
 next();
 });
+export const checkOwnership = async (pid, email) => {
+    const result = await service.getById(pid);
+    const product = result.payload; 
+    if (!product) return false;
+    return product.owner === email;
+};
 router.param('productId', async (req, res, next, id) => {
     if (!config.MONGODB_ID_REGEX.test(req.params.productId)) {
         return res.status(400).send({ origin: config.SERVER, payload: null, error: 'Id del producto no válido' });
@@ -33,7 +39,7 @@ router.get('/:id', getCartById);
 
 // Rutas protegidas para usuarios autenticados
 router.post('/', verifyToken, createCart);
-router.post('/:cartId/products/:productId',passportCall('jwtlogin'), addProductToCart);
+router.post('/:cartId/products/:productId',verifyToken,handlePolicies(['admin','user','premium']), addProductToCart);
 router.delete('/:id/products', verifyToken, clearCartProducts);
 router.delete('/:id/products/:productId', verifyToken, removeProductFromCart);
 
@@ -43,5 +49,10 @@ router.get('/:cartId/purchase', verifyToken, purchaseCart);
 // Rutas protegidas para administradores
 router.put('/:id', verifyToken, handlePolicies(['admin']), updateCart);
 router.delete('/:id', verifyToken, handlePolicies(['admin']), deleteCart);
+
+
+
+
+
 
 export default router;

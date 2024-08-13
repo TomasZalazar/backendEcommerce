@@ -62,8 +62,7 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.set('view engine', 'handlebars');
     // Habilita CORS
     app.use(cors({
-        origin: 'http://localhost:4000',
-        credentials: true
+        origin: '*'
     }));
     
     app.use(addLogger)

@@ -2,6 +2,7 @@ import { createHash, isValidPassword, createToken, verifyToken } from '../servic
 import UserManager from '../models/dao/userManager.mdb.js';
 import userModel from '../models/users.model.js';
 import  config  from '../config.js';
+import mongoose from 'mongoose';
 
 const userManager = new UserManager(userModel);
 
@@ -77,6 +78,35 @@ export const paginateUsers = async (req, res) => {
         const options = { page, limit, sort: { lastName: 1 } };
         const process = await userManager.getPaginated(filter, options);
         res.status(200).send({ origin: config.SERVER, payload: process });
+    } catch (err) {
+        res.status(500).send({ origin: config.SERVER, payload: null, error: err.message });
+    }
+};
+
+export const toggleUserRole = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).send({ origin: config.SERVER, payload: null, error: 'ID inválido.' });
+        }
+        if (req.user._id.toString() === id) {
+            return res.status(403).send({ origin: config.SERVER, payload: null, error: 'No puedes modificar tu propio rol.' });
+        }
+
+        const user = await userManager.getById(id);
+
+        if (!user) {
+            return res.status(404).send({ origin: config.SERVER, payload: null, error: 'Usuario no encontrado.' });
+        }
+
+        // Alternar el rol del usuario
+        const newRole = user.payload.role === 'premium' ? 'user' : 'premium';
+        
+        // Actualizar el rol del usuario
+        const updatedUser = await userManager.update(id, { role: newRole });
+
+        res.status(updatedUser.status).send(updatedUser.payload || { error: updatedUser.error });
     } catch (err) {
         res.status(500).send({ origin: config.SERVER, payload: null, error: err.message });
     }

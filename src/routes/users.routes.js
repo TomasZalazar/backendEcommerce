@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUsers, getUserById, createUser, updateUser, deleteUser, aggregateUsers, paginateUsers } from '../controllers/users.controller.js';
+import { getUsers, getUserById, createUser, updateUser, deleteUser, aggregateUsers, paginateUsers, toggleUserRole } from '../controllers/users.controller.js';
 import { handlePolicies, verifyToken } from '../services/utils.js';
 import { verifyRequiredBody } from '../services/utils.js';
 import config from '../config.js';
@@ -26,5 +26,7 @@ router.delete('/:id', verifyToken, handlePolicies(['admin']), deleteUser);
 router.get('/aggregate/:role', verifyToken, handlePolicies(['admin']), aggregateUsers);
 router.get('/paginate/:page/:limit', verifyToken, paginateUsers);
 
+// Admin puede alternar el rol de usuario entre premium y user
+router.get('/role/:id', verifyToken, handlePolicies(['admin']), toggleUserRole);
 
 export default router;

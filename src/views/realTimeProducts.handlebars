@@ -21,8 +21,9 @@
                     <p class="card-text">Descripción del producto: {{description}}</p>
                     <p class="card-text">Stock disponible: {{stock}}</p>
                     <p class="card-text">Categoría: {{category}}</p>
-                    <button class="btn btn-primary add-to-cart" data-cartid="{{cartId}}"
-                        data-productid="{{_id}}">Agregar al carrito</button>
+                    <button class="btn btn-primary add-to-cart" data-cartid="{{cartId}}" data-productid="{{_id}}">
+                        Agregar al carrito
+                    </button>
                 </div>
             </div>
         </div>
@@ -105,8 +106,12 @@
             button.addEventListener('click', async (event) => {
                 event.preventDefault();
 
-                const cartId = '{{user._cart_id._id}}'// Obtén el ID del carrito desde el botón
+                const cartId = '{{user._cart_id._id}}';
                 const productId = button.getAttribute('data-productid'); // Obtén el ID del producto desde el botón
+                if (!cartId || !productId) {
+                    console.error('Cart ID o Product ID no encontrados');
+                    return;
+                }
 
                 try {
                     const token = localStorage.getItem('token');
@@ -132,66 +137,66 @@
                 }
             });
         });
-        
+
         document.getElementById('agregar-producto-btn').addEventListener('click', async (event) => {
-    event.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
+            event.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
 
-    const nuevoProducto = {
-        title: document.getElementById('nombre-producto').value,
-        description: document.getElementById('descripcion-producto').value,
-        category: document.getElementById('categoria-producto').value,
-        price: document.getElementById('precio-producto').value,
-        code: document.getElementById('codigo-producto').value,
-        stock: document.getElementById('stock-producto').value,
-    };
+            const nuevoProducto = {
+                title: document.getElementById('nombre-producto').value,
+                description: document.getElementById('descripcion-producto').value,
+                category: document.getElementById('categoria-producto').value,
+                price: document.getElementById('precio-producto').value,
+                code: document.getElementById('codigo-producto').value,
+                stock: document.getElementById('stock-producto').value,
+            };
 
-    if (!nuevoProducto.title || !nuevoProducto.description || !nuevoProducto.category ||
-        !nuevoProducto.price || !nuevoProducto.code || !nuevoProducto.stock) {
-        console.error('Faltan campos requeridos');
-        return;
-    }
+            if (!nuevoProducto.title || !nuevoProducto.description || !nuevoProducto.category ||
+                !nuevoProducto.price || !nuevoProducto.code || !nuevoProducto.stock) {
+                console.error('Faltan campos requeridos');
+                return;
+            }
 
-    try {
-        const formData = new FormData();
-        formData.append('title', nuevoProducto.title);
-        formData.append('description', nuevoProducto.description);
-        formData.append('category', nuevoProducto.category);
-        formData.append('price', nuevoProducto.price);
-        formData.append('code', nuevoProducto.code);
-        formData.append('stock', nuevoProducto.stock);
+            try {
+                const formData = new FormData();
+                formData.append('title', nuevoProducto.title);
+                formData.append('description', nuevoProducto.description);
+                formData.append('category', nuevoProducto.category);
+                formData.append('price', nuevoProducto.price);
+                formData.append('code', nuevoProducto.code);
+                formData.append('stock', nuevoProducto.stock);
 
-        const thumbnailsInput = document.getElementById('thumbnails-producto');
-        for (const file of thumbnailsInput.files) {
-            formData.append('thumbnails', file);
-        }
+                const thumbnailsInput = document.getElementById('thumbnails-producto');
+                for (const file of thumbnailsInput.files) {
+                    formData.append('thumbnails', file);
+                }
 
-        // Obtener el token de la cookie
-        const token = getCookie('TOMAS_APP_cookie');
-        if (!token) {
-            console.error('Token no encontrado en cookies');
-            return;
-        }
+                // Obtener el token de la cookie
+                const token = getCookie('TOMAS_APP_cookie');
+                if (!token) {
+                    console.error('Token no encontrado en cookies');
+                    return;
+                }
 
-        const response = await fetch('/api/products/create', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            credentials: 'include',
-            body: formData,
+                const response = await fetch('/api/products/create', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    credentials: 'include',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    document.getElementById('formulario-producto').reset();
+                    socketClient.emit('nuevoProducto', nuevoProducto);
+                } else {
+                    const errorMessage = await response.json();
+                    console.error('Error al agregar el producto:', errorMessage);
+                }
+            } catch (error) {
+                console.error('Error al agregar el producto:', error.message);
+            }
         });
-
-        if (response.ok) {
-            document.getElementById('formulario-producto').reset();
-            socketClient.emit('nuevoProducto', nuevoProducto);
-        } else {
-            const errorMessage = await response.json();
-            console.error('Error al agregar el producto:', errorMessage);
-        }
-    } catch (error) {
-        console.error('Error al agregar el producto:', error.message);
-    }
-});
 
         // Escuchar eventos del servidor Socket.IO para nuevos productos
         socketClient.on('nuevoProducto', data => {

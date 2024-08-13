@@ -14,16 +14,16 @@ const schema = new mongoose.Schema({
     }]
 });
 
-// Middleware de preconsulta para find y findOne
-schema.pre('find', function () {
-    this.populate({ path: '_user_id', model: usersModel });
-    this.populate({ path: 'products.product', model: productModel });
+schema.pre(/^find/, function () {
+    this.populate({
+        path: '_user_id',
+        model: usersModel
+    }).populate({
+        path: 'products.product',
+        model: productModel
+    });
 });
 
-schema.pre('findOne', function () {
-    this.populate({ path: '_user_id', model: usersModel });
-    this.populate({ path: 'products.product', model: productModel });
-});
 
 const model = mongoose.model(collection, schema);
 

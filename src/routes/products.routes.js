@@ -36,7 +36,7 @@ router.post('/create', verifyToken,handlePolicies(['admin','premium']), verifyRe
 
 
 router.put('/:id', verifyToken, handlePolicies(['admin']), updateProduct);
-router.delete('/:id', verifyToken, handlePolicies(['admin','premium']), deleteProduct);
+router.delete('/:pid', verifyToken, handlePolicies(['admin','premium']), deleteProduct);
 
 
 // Endpoint de mocking con qty como parámetro de ruta
