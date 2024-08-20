@@ -8,18 +8,16 @@ import CustomError from '../services/CustomError.class.js';
 
 
 
-const router = Router();
+const products = Router();
 
-router.param('id', async (req, res, next, id) => {
+products.param('id', async (req, res, next, id) => {
     if (!config.MONGODB_ID_REGEX.test(id)) {
-        // Registra el error usando Winston
        
-       // Crea el error personalizado y pásalo al middleware de errores
        const error = new CustomError(
         errorsDictionary.INVALID_MONGOID_FORMAT,
         `Id no válido: ${id} - ${errorsDictionary.INVALID_MONGOID_FORMAT.message}`
     );
-    return next(error); // Pasar el error al middleware de manejo de errores
+    return next(error); 
 }
 next();
 });
@@ -27,20 +25,20 @@ next();
 
 
 // Rutas públicas
-router.get('/paginate', paginateProducts);
-router.get('/', getAllProducts);
-router.get('/:id', getProductById);
+products.get('/paginate', paginateProducts);
+products.get('/', getAllProducts);
+products.get('/:id', getProductById);
 
 // Rutas protegidas para administradores
-router.post('/create', verifyToken,handlePolicies(['admin','premium']), verifyRequiredBody(['title', 'description', 'price', 'stock', 'category']), uploader.array('thumbnails', 4), createProduct);
+products.post('/create', verifyToken,handlePolicies(['admin','premium']), verifyRequiredBody(['title', 'description', 'price', 'stock', 'category']), uploader.array('thumbnails', 4), createProduct);
 
 
-router.put('/:id', verifyToken, handlePolicies(['admin']), updateProduct);
-router.delete('/:pid', verifyToken, handlePolicies(['admin','premium']), deleteProduct);
+products.put('/:id', verifyToken, handlePolicies(['admin']), updateProduct);
+products.delete('/:pid', verifyToken, handlePolicies(['admin','premium']), deleteProduct);
 
 
 // Endpoint de mocking con qty como parámetro de ruta
-router.get('/mockingproducts/:qty', (req, res, next) => {
+products.get('/mockingproducts/:qty', (req, res, next) => {
     const qty = parseInt(req.params.qty, 10);
     if (isNaN(qty) || qty <= 0) {
         const error = new CustomError(
@@ -52,4 +50,4 @@ router.get('/mockingproducts/:qty', (req, res, next) => {
     const mockProducts = generateMockProducts(qty);
     res.json(mockProducts);
 });
-export default router;
+export default products;

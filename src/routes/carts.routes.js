@@ -3,12 +3,10 @@ import { getAllCarts, getCartById, createCart, updateCart, deleteCart, addProduc
 import { handlePolicies, verifyToken } from '../services/utils.js';
 
 import config from '../config.js';
-import { passportCall } from '../auth/passport.strategies.js';
 
+const cart = Router();
 
-const router = Router();
-
-router.param('id', async (req, res, next, id) => {
+cart.param('id', async (req, res, next, id) => {
     if (!config.MONGODB_ID_REGEX.test(id)) {
         // Registra el error usando Winston
        
@@ -27,32 +25,32 @@ export const checkOwnership = async (pid, email) => {
     if (!product) return false;
     return product.owner === email;
 };
-router.param('productId', async (req, res, next, id) => {
+cart.param('productId', async (req, res, next, id) => {
     if (!config.MONGODB_ID_REGEX.test(req.params.productId)) {
         return res.status(400).send({ origin: config.SERVER, payload: null, error: 'Id del producto no válido' });
     }
     next();
 });
 // Rutas públicas
-router.get('/', getAllCarts);
-router.get('/:id', getCartById);
+cart.get('/', getAllCarts);
+cart.get('/:id', getCartById);
 
 // Rutas protegidas para usuarios autenticados
-router.post('/', verifyToken, createCart);
-router.post('/:cartId/products/:productId',verifyToken,handlePolicies(['admin','user','premium']), addProductToCart);
-router.delete('/:id/products', verifyToken, clearCartProducts);
-router.delete('/:id/products/:productId', verifyToken, removeProductFromCart);
+cart.post('/', verifyToken, createCart);
+cart.post('/:cartId/products/:productId',verifyToken,handlePolicies(['admin','user','premium']), addProductToCart);
+cart.delete('/:id/products', verifyToken, clearCartProducts);
+cart.delete('/:id/products/:productId', verifyToken, removeProductFromCart);
 
 // Ruta para comprar el carrito
-router.get('/:cartId/purchase', verifyToken, purchaseCart);
+cart.get('/:cartId/purchase', verifyToken, purchaseCart);
 
 // Rutas protegidas para administradores
-router.put('/:id', verifyToken, handlePolicies(['admin']), updateCart);
-router.delete('/:id', verifyToken, handlePolicies(['admin']), deleteCart);
+cart.put('/:id', verifyToken, handlePolicies(['admin']), updateCart);
+cart.delete('/:id', verifyToken, handlePolicies(['admin']), deleteCart);
 
 
 
 
 
 
-export default router;
+export default cart;

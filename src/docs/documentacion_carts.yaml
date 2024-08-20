@@ -1,0 +1,272 @@
+openapi: 3.0.1
+info:
+  title: API Documentation
+  description: Documentación de la API para la aplicación de gestión de carritos.
+  version: 1.0.0
+servers:
+  - url: http://localhost:4000
+    description: Servidor local para pruebas
+
+components:
+  schemas:
+    Cart:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 605c72ef5f1b2c001f6e23f0
+        userId:
+          type: string
+          example: "605c72ef5f1b2c001f6e23f1"
+        products:
+          type: array
+          items:
+            type: object
+            properties:
+              productId:
+                type: string
+                example: "605c72ef5f1b2c001f6e23f2"
+              quantity:
+                type: integer
+                example: 2
+
+  parameters:
+    CartId:
+      name: id
+      in: path
+      required: true
+      description: ID del carrito
+      schema:
+        type: string
+
+  responses:
+    CartNotFound:
+      description: Carrito no encontrado
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: 'Carrito no encontrado'
+    PermissionDenied:
+      description: Permiso denegado
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: 'No tienes permiso para realizar esta acción'
+    ValidationError:
+      description: Error de validación
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: 'Error en la solicitud'
+
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /api/cart:
+    get:
+      summary: Obtener todos los carritos
+      tags:
+        - Carts
+      responses:
+        '200':
+          description: Lista de carritos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cart'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+    post:
+      summary: Crear un nuevo carrito
+      tags:
+        - Carts
+      security:
+        - jwtAuth: []
+      responses:
+        '201':
+          description: Carrito creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/cart/{id}:
+    get:
+      summary: Obtener un carrito por ID
+      tags:
+        - Carts
+      parameters:
+        - $ref: '#/components/parameters/CartId'
+      responses:
+        '200':
+          description: Información del carrito
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '404':
+          $ref: '#/components/responses/CartNotFound'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+    put:
+      summary: Actualizar un carrito por ID
+      tags:
+        - Carts
+      parameters:
+        - $ref: '#/components/parameters/CartId'
+      requestBody:
+        description: Información actualizada del carrito
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Cart'
+        required: true
+      security:
+        - jwtAuth: []
+      responses:
+        '200':
+          description: Carrito actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/CartNotFound'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      summary: Eliminar un carrito por ID
+      tags:
+        - Carts
+      parameters:
+        - $ref: '#/components/parameters/CartId'
+      security:
+        - jwtAuth: []
+      responses:
+        '200':
+          description: Carrito eliminado exitosamente
+        '404':
+          $ref: '#/components/responses/CartNotFound'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/cart/{id}/products:
+    post:
+      summary: Agregar un producto al carrito
+      tags:
+        - Carts
+      parameters:
+        - $ref: '#/components/parameters/CartId'
+      requestBody:
+        description: Información del producto a agregar
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productId:
+                  type: string
+                  example: "605c72ef5f1b2c001f6e23f2"
+                quantity:
+                  type: integer
+                  example: 1
+        required: true
+      security:
+        - jwtAuth: []
+      responses:
+        '200':
+          description: Producto agregado al carrito
+        '404':
+          $ref: '#/components/responses/CartNotFound'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      summary: Eliminar un producto del carrito
+      tags:
+        - Carts
+      parameters:
+        - $ref: '#/components/parameters/CartId'
+      requestBody:
+        description: Información del producto a eliminar
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                productId:
+                  type: string
+                  example: "605c72ef5f1b2c001f6e23f2"
+        required: true
+      security:
+        - jwtAuth: []
+      responses:
+        '200':
+          description: Producto eliminado del carrito
+        '404':
+          $ref: '#/components/responses/CartNotFound'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/cart/{id}/clear:
+    post:
+      summary: Limpiar el carrito
+      tags:
+        - Carts
+      parameters:
+        - $ref: '#/components/parameters/CartId'
+      security:
+        - jwtAuth: []
+      responses:
+        '200':
+          description: Carrito limpiado exitosamente
+        '404':
+          $ref: '#/components/responses/CartNotFound'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/cart/{id}/purchase:
+    post:
+      summary: Realizar la compra del carrito
+      tags:
+        - Carts
+      parameters:
+        - $ref: '#/components/parameters/CartId'
+      security:
+        - jwtAuth: []
+      responses:
+        '200':
+          description: Compra realizada exitosamente
+        '404':
+          $ref: '#/components/responses/CartNotFound'
+        '500':
+          $ref: '#/components/responses/ValidationError'

@@ -1,0 +1,340 @@
+openapi: 3.0.1
+info:
+  title: API Documentation
+  description: Documentación de la API para la aplicación de gestión de productos.
+  version: 1.0.0
+servers:
+  - url: http://localhost:4000
+    description: Servidor local para pruebas
+
+components:
+  schemas:
+    Product:
+      type: object
+      required:
+        - title
+        - description
+        - price
+        - code
+        - stock
+        - category
+        - owner
+      properties:
+        id:
+          type: string
+          example: 605c72ef5f1b2c001f6e23f0
+        title:
+          type: string
+          example: "Product Name"
+        description:
+          type: string
+          example: "Product description here"
+        price:
+          type: number
+          format: float
+          example: 29.99
+        code:
+          type: string
+          example: "PROD1234"
+        stock:
+          type: integer
+          example: 100
+        thumbnails:
+          type: array
+          items:
+            type: string
+          example: ["image1.jpg", "image2.jpg"]
+        category:
+          type: string
+          example: "Electronics"
+        owner:
+          type: string
+          example: "admin" # Ajustar si es ObjectId en lugar de string
+
+    Pagination:
+      type: object
+      properties:
+        docs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        totalDocs:
+          type: integer
+          example: 100
+        limit:
+          type: integer
+          example: 10
+        page:
+          type: integer
+          example: 1
+        totalPages:
+          type: integer
+          example: 10
+
+  parameters:
+    ProductId:
+      name: id
+      in: path
+      required: true
+      description: ID del producto
+      schema:
+        type: string
+
+  responses:
+    ProductNotFound:
+      description: Producto no encontrado
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: 'Producto no encontrado'
+    PermissionDenied:
+      description: Permiso denegado
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: 'No tienes permiso para realizar esta acción'
+    ValidationError:
+      description: Error de validación
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: 'Error en la solicitud'
+
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /api/products:
+    get:
+      summary: Obtener todos los productos
+      tags:
+        - Products
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            example: 10
+          description: Número de productos a retornar
+        - in: query
+          name: page
+          schema:
+            type: integer
+            example: 1
+          description: Número de página para paginación
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: Criterio de ordenación (ej. precio ascendente/descendente)
+        - in: query
+          name: query
+          schema:
+            type: string
+          description: Filtros de búsqueda en formato JSON
+      responses:
+        '200':
+          description: Lista de productos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/products/create:
+    post:
+      summary: Crear un nuevo producto
+      tags:
+        - Products
+      requestBody:
+        description: Información del nuevo producto
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                  format: float
+                code:
+                  type: string
+                stock:
+                  type: integer
+                category:
+                  type: string
+                thumbnails:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - title
+                - description
+                - price
+                - code
+                - stock
+                - category
+      security:
+        - jwtAuth: []
+      responses:
+        '201':
+          description: Producto creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/products/{id}:
+    get:
+      summary: Obtener un producto por ID
+      tags:
+        - Products
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Información del producto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          $ref: '#/components/responses/ProductNotFound'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+    put:
+      summary: Actualizar un producto por ID
+      tags:
+        - Products
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      requestBody:
+        description: Información actualizada del producto
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+        required: true
+      security:
+        - jwtAuth: []
+      responses:
+        '200':
+          description: Producto actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/ProductNotFound'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      summary: Eliminar un producto por ID
+      tags:
+        - Products
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      security:
+        - jwtAuth: []
+      responses:
+        '200':
+          description: Producto eliminado exitosamente
+        '404':
+          $ref: '#/components/responses/ProductNotFound'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/products/paginate:
+    get:
+      summary: Obtener productos paginados
+      tags:
+        - Products
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            example: 10
+          description: Número de productos por página
+        - in: query
+          name: page
+          schema:
+            type: integer
+            example: 1
+          description: Página de productos a retornar
+        - in: query
+          name: query
+          schema:
+            type: string
+          description: Filtros de búsqueda en formato JSON
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: Criterio de ordenación
+      responses:
+        '200':
+          description: Lista de productos paginados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pagination'
+        '500':
+          $ref: '#/components/responses/ValidationError'
+
+  /api/products/mockproducts/{qty}:
+    get:
+      summary: Obtener productos de prueba
+      tags:
+        - Products
+      parameters:
+        - in: path
+          name: qty
+          schema:
+            type: integer
+            example: 10
+          description: Cantidad de productos de prueba a generar
+      responses:
+        '200':
+          description: Lista de productos de prueba
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/ValidationError'

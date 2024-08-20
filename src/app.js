@@ -22,15 +22,17 @@ import errorsHandler from './services/errors.handler.js'
 import cookieRouter from './routes/cookies.routes.js'
 import protectedRoutes from './routes/recover.routes.js'
 
-import { addLogger, logHttpRequests }  from './services/logger.js'
+import { addLogger, logHttpRequests } from './services/logger.js'
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUiExpress from 'swagger-ui-express';
 
 const app = express()
 
 
-const expressInstance = app.listen(config.PORT, async () => { 
+const expressInstance = app.listen(config.PORT, async () => {
     MongoSingleton.getInstance()
 
-    
+
     //socket
     const socketServer = initSocket(expressInstance);
     app.set('socketServer', socketServer);
@@ -41,7 +43,7 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
     app.use(cookieParser(config.SECRET));
-    
+
     //sessions
     app.use(session({
         // store: new fileStorage({ path: './sessions', ttl: 100, retries: 0 }),
@@ -50,11 +52,11 @@ const expressInstance = app.listen(config.PORT, async () => {
         resave: false,
         saveUninitialized: false
     }));
-     // inicializar Passport y sesiones de Passport
+    // inicializar Passport y sesiones de Passport
     initAuthStrategies();
     app.use(passport.initialize())
     app.use(passport.session())
-    
+
 
     // motor plantilla config 
     app.engine('handlebars', handlebars.engine());
@@ -62,12 +64,26 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.set('view engine', 'handlebars');
     // Habilita CORS
     app.use(cors({
-        origin: '*'
+        origin: 'http://localhost:5173', 
+        credentials: true 
     }));
-    
+
     app.use(addLogger)
     app.use(logHttpRequests)
-  
+    const swaggerOptions = {
+        definition: {
+            openapi: '3.0.1',
+            info: {
+                title: 'Documentación sistema TODOTIENDA',
+                description: 'Esta documentación cubre toda la API habilitada para TODOTIENDA',
+            },
+        },
+        apis: ['./src/docs/**/*.yaml'], // todos los archivos de configuración de rutas estarán aquí
+        // apis: ['./src/docs/**/documentacion.2.1.0.yaml'], // archivo yaml en especifico
+    };
+    const specs = swaggerJsdoc(swaggerOptions);
+    app.use('/api/docs', swaggerUiExpress.serve, swaggerUiExpress.setup(specs));
+
     // endpoints
     app.use('/api/products', productsRoutes)
     app.use('/api/users', usersRoutes)
@@ -76,12 +92,12 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.use('/api/cookies', cookieRouter);
     app.use('/api/recover', protectedRoutes);
 
-    
+
     app.use('/static', express.static(`${config.DIRNAME}/public`))
-     
-     // views    
-     app.use('/', viewsRoutes)
-     
-     app.use(errorsHandler);
+
+    // views    
+    app.use('/', viewsRoutes)
+
+    app.use(errorsHandler);
 
 }) 
