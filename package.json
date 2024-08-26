@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch --env-file .env.devel  src/app --mode=devel",
-    "prod": "node --watch --env-file .env.prod  src/app --mode=prod"
+    "prod": "node --watch --env-file .env.prod  src/app --mode=prod",
+    "users": "mocha src/test/users.test.js",
+    "products": "mocha src/test/products.test.js",
+    "supertest": "mocha src/test/auth.supertest.test.js"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +17,7 @@
   "dependencies": {
     "axios": "^1.7.2",
     "bcrypt": "^5.1.1",
+    "chai-http": "^5.0.0",
     "commander": "^12.1.0",
     "connect-mongo": "^5.1.0",
     "cookie-parser": "^1.4.6",
@@ -39,6 +43,9 @@
     "winston": "^3.13.1"
   },
   "devDependencies": {
-    "@faker-js/faker": "^8.4.1"
+    "@faker-js/faker": "^8.4.1",
+    "chai": "^5.1.1",
+    "mocha": "^10.7.3",
+    "supertest": "^7.0.0"
   }
 }

@@ -48,8 +48,8 @@ class ProductManager {
     async create(productData) {
         try {
             const newProduct = new this.ProductModel(productData);
-            await newProduct.save();
-            return { status: 201, origin: 'DAO', payload: newProduct };
+            const savedProduct = await newProduct.save();
+            return { status: 201, origin: 'DAO', payload: savedProduct };
         } catch (error) {
             return { status: 500, origin: 'DAO', payload: { error: errorsDictionary.RECORD_CREATION_ERROR } };
         }
@@ -59,9 +59,8 @@ class ProductManager {
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return { status: 400, origin: 'DAO', payload: { error: errorsDictionary.INVALID_MONGOID_FORMAT } };
         }
-
         try {
-            const updatedProduct = await this.ProductModel.findByIdAndUpdate(id, productData, { new: true });
+            const updatedProduct = await this.ProductModel.findByIdAndUpdate(id, productData, { new: true });   
             if (updatedProduct) {
                 return { status: 200, origin: 'DAO', payload: updatedProduct };
             } else {

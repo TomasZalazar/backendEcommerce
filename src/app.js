@@ -101,3 +101,4 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.use(errorsHandler);
 
 }) 
+export default app;

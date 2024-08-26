@@ -22,7 +22,7 @@ const config = {
     // UPLOAD_DIR: 'public/img'
     get UPLOAD_DIR() { return `${this.DIRNAME}/public/img`; },
     MONGODB_URI: process.env.MONGODB_URI,
-    // MONGODB_URI2: process.env.MONGODB_URI2",
+    MONGODB_URI2: process.env.MONGODB_URI2,
     MONGODB_ID_REGEX: new RegExp(process.env.MONGODB_ID_REGEX),
     MODE: process.env.MODE || 'dev',
     SECRET: process.env.SECRET,

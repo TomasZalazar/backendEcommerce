@@ -5,6 +5,7 @@ import productModel from './products.model.js';
 mongoose.pluralize(null);
 
 const collection = 'carts';
+// const collection = 'carts_test'; // usar solo para test
 
 const schema = new mongoose.Schema({
     _user_id: { type: mongoose.Schema.Types.ObjectId, required: false, ref: 'users' },

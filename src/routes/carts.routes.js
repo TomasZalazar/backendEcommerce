@@ -48,9 +48,4 @@ cart.get('/:cartId/purchase', verifyToken, purchaseCart);
 cart.put('/:id', verifyToken, handlePolicies(['admin']), updateCart);
 cart.delete('/:id', verifyToken, handlePolicies(['admin']), deleteCart);
 
-
-
-
-
-
 export default cart;

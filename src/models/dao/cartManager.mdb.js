@@ -11,7 +11,7 @@ class CartsManager {
     }
 
     purchaseCart = async (cid, user) => {
-        const cartResponse = await this.getById(cid); // Obtengo el carrito en base al ID que me dan
+        const cartResponse = await this.getById(cid); 
         if (cartResponse.status !== 200) {
             throw new Error('Carrito no encontrado');
         }

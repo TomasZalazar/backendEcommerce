@@ -26,7 +26,7 @@ router.post('/login', verifyRequiredBody(['email', 'password']),
         if (!req.user) {
             return res.status(401).json({ error: 'Usuario o clave no válidos' });
         }
-        console.log('hola toy aca ')
+        
         res.status(200).json({ message: 'Inicio de sesión exitoso', user: req.user });
     }
 );
