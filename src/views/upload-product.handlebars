@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Producto</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+
+<body>
+    <header>
+        <h1>Subir Producto</h1>
+    </header>
+
+    <main>
+        <form id="formulario-producto" action="/api/products/create" method="POST" enctype="multipart/form-data">
+            <input type="text" id="nombre-producto" name="title" placeholder="Título" required />
+            <input type="text" id="descripcion-producto" name="description" placeholder="Descripción" required />
+            <input type="text" id="categoria-producto" name="category" placeholder="Categoría" required />
+            <input type="number" id="precio-producto" name="price" placeholder="Precio" required />
+            <input type="text" id="codigo-producto" name="code" placeholder="Código" required />
+            <input type="number" id="stock-producto" name="stock" placeholder="Stock" required />
+            <input type="file" id="thumbnails-producto" name="thumbnails" multiple />
+            <button type="submit">Crear Producto</button>
+        </form>
+
+
+    </main>
+
+    <script>    
+        document.addEventListener('DOMContentLoaded', () => {
+    const formElement = document.getElementById('formulario-producto');
+
+    formElement.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        // Recoger datos del formulario
+        const nuevoProducto = {
+            title: document.getElementById('nombre-producto').value,
+            description: document.getElementById('descripcion-producto').value,
+            category: document.getElementById('categoria-producto').value,
+            price: parseFloat(document.getElementById('precio-producto').value),
+            code: document.getElementById('codigo-producto').value,
+            stock: parseInt(document.getElementById('stock-producto').value, 10),
+        };
+        console.log(nuevoProducto)
+
+        // Crear un objeto FormData
+        const formData = new FormData();
+        formData.append('title', nuevoProducto.title);
+        formData.append('description', nuevoProducto.description);
+        formData.append('category', nuevoProducto.category);
+        formData.append('price', nuevoProducto.price);
+        formData.append('code', nuevoProducto.code);
+        formData.append('stock', nuevoProducto.stock);
+
+        // Añadir archivos de imagen si existen
+        const thumbnailsInput = document.getElementById('thumbnails-producto');
+        for (const file of thumbnailsInput.files) {
+            formData.append('thumbnails', file);
+        }
+
+        // Obtener el token de autenticación (asegúrate de definir esta variable correctamente)
+        const authToken = '{{authToken}}'
+
+        try {
+            // Enviar el FormData al servidor
+            const response = await fetch('/api/products/create', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                    // No establecer el Content-Type para FormData, el navegador lo hace automáticamente
+                },
+                body: formData,
+            });
+
+            if (response.ok) {
+                // Limpiar el formulario
+                formElement.reset();
+                alert('Producto creado exitosamente');
+            } else {
+                // Mostrar mensaje de error
+                const errorMessage = await response.json();
+                console.error('Error al agregar el producto:', errorMessage);
+                alert(`Error al agregar el producto: ${errorMessage.error || 'Error desconocido'}`);
+            }
+        } catch (error) {
+            // Mostrar mensaje de error en consola
+            console.error('Error al agregar el producto:', error.message);
+            alert(`Error al crear el producto: ${error.message}`);
+        }
+    });
+});
+
+
+    </script>
+</body>
+
+</html>

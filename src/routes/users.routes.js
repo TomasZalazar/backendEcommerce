@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { getUsers, getUserById, createUser, updateUser, deleteUser, aggregateUsers, paginateUsers, toggleUserRole } from '../controllers/users.controller.js';
+import { getUsers, getUserById, createUser, updateUser, deleteUser, aggregateUsers, paginateUsers, toggleUserRole, uploadDocuments } from '../controllers/users.controller.js';
 import { handlePolicies, verifyToken } from '../services/utils.js';
 import { verifyRequiredBody } from '../services/utils.js';
 import config from '../config.js';
+import { uploader } from '../services/uploader.js';
 
 const router = Router();
 router.param('id', async (req, res, next, id) => {
@@ -27,6 +28,10 @@ router.get('/aggregate/:role', verifyToken, handlePolicies(['admin']), aggregate
 router.get('/paginate/:page/:limit', verifyToken, paginateUsers);
 
 // Admin puede alternar el rol de usuario entre premium y user
-router.get('/role/:id', verifyToken, handlePolicies(['admin']), toggleUserRole);
+router.get('/premium/:id', verifyToken, handlePolicies(['admin']), toggleUserRole);
+
+router.post('/:typeDoc/documents',verifyToken, uploader.array('documentsFiles', 3), uploadDocuments)
+
+
 
 export default router;

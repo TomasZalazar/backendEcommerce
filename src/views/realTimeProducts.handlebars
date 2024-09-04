@@ -1,14 +1,13 @@
 <div class="container">
-
+    <!-- Perfil de usuario y botón de logout -->
     <h1>Perfil de usuario {{login_type}}</h1>
-
     <h2>Usuario: {{user.firstName}}, {{user.lastName}}</h2>
     <h3>Rol: {{user.role}}</h3>
-
     <form action="/api/auth/logout" method="get">
         <button type="submit" class="btn btn-success">Salir</button>
     </form>
 
+    <!-- Listado de productos -->
     <h1 class="mt-4">Listado de productos</h1>
     <div class="row">
         {{#each products}}
@@ -29,6 +28,8 @@
         </div>
         {{/each}}
     </div>
+
+    <!-- Paginación -->
     <div id="pagination" class="mt-3">
         {{#if showPrev}}
         <a href="/realtimeproducts?page={{prevPage}}" class="btn btn-primary">Anterior</a>
@@ -39,9 +40,10 @@
         {{/if}}
     </div>
 </div>
+
+<!-- Formulario para agregar un nuevo producto -->
 <div class="container-">
     <div class="row">
-        <!-- Lista de productos -->
         <div class="col-md-6">
             <h1>Listado de productos</h1>
             <ul id="productsList" class="list-group">
@@ -53,45 +55,43 @@
             </ul>
         </div>
 
-        <!-- Formulario para agregar un nuevo producto -->
         <div class="col-md-6">
             <h1>Agregar Producto</h1>
-            <form id="formulario-producto" method="post" enctype="multipart/form-data" action="/api/products/create"
+            <form id="formulario-producto" method="POST" enctype="multipart/form-data" action="/api/products/create"
                 class="mt-3">
                 <div class="mb-3">
                     <input type="text" id="nombre-producto" name="title" class="form-control"
-                        placeholder="Título del Producto" />
+                        placeholder="Título del Producto">
                 </div>
                 <div class="mb-3">
                     <input type="text" id="descripcion-producto" name="description" class="form-control"
-                        placeholder="Descripción del Producto" />
+                        placeholder="Descripción del Producto">
                 </div>
                 <div class="mb-3">
                     <input type="text" id="categoria-producto" name="category" class="form-control"
-                        placeholder="Categoria del Producto" />
+                        placeholder="Categoría del Producto">
                 </div>
                 <div class="mb-3">
                     <input type="number" id="precio-producto" name="price" class="form-control"
-                        placeholder="Precio del Producto" />
+                        placeholder="Precio del Producto">
                 </div>
                 <div class="mb-3">
                     <input type="text" id="codigo-producto" name="code" class="form-control"
-                        placeholder="Código del Producto" />
+                        placeholder="Código del Producto">
                 </div>
                 <div class="mb-3">
                     <input type="number" id="stock-producto" name="stock" class="form-control"
-                        placeholder="Stock del Producto" />
+                        placeholder="Stock del Producto">
                 </div>
                 <div class="mb-3">
-                    <input type="file" id="thumbnails-producto" name="thumbnails" class="form-control" multiple />
+                    <input type="file" id="thumbnails-producto" name="thumbnails" class="form-control" multiple>
                 </div>
                 <button id="agregar-producto-btn" class="btn btn-primary">Agregar Producto</button>
             </form>
+
         </div>
     </div>
-
 </div>
-
 
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
     integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
@@ -107,7 +107,7 @@
                 event.preventDefault();
 
                 const cartId = '{{user._cart_id._id}}';
-                const productId = button.getAttribute('data-productid'); // Obtén el ID del producto desde el botón
+                const productId = button.getAttribute('data-productid');
                 if (!cartId || !productId) {
                     console.error('Cart ID o Product ID no encontrados');
                     return;
@@ -115,20 +115,19 @@
 
                 try {
                     const token = localStorage.getItem('token');
-                    console.log(token) // Obtén el token JWT almacenado en localStorage
+                    console.log(token)
 
                     const response = await fetch(`/api/cart/${cartId}/products/${productId}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}` // Incluye el token JWT en el header Authorization
+                            'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify({ qty: 1 })
                     });
 
                     if (response.ok) {
                         console.log('Producto agregado al carrito con éxito');
-                        // Aquí puedes actualizar la UI o realizar otras acciones después de agregar al carrito
                     } else {
                         console.error('Error al agregar producto al carrito:', response.statusText);
                     }
@@ -139,7 +138,7 @@
         });
 
         document.getElementById('agregar-producto-btn').addEventListener('click', async (event) => {
-            event.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
+            event.preventDefault();
 
             const nuevoProducto = {
                 title: document.getElementById('nombre-producto').value,
@@ -150,6 +149,7 @@
                 stock: document.getElementById('stock-producto').value,
             };
 
+            // Verificar si faltan campos
             if (!nuevoProducto.title || !nuevoProducto.description || !nuevoProducto.category ||
                 !nuevoProducto.price || !nuevoProducto.code || !nuevoProducto.stock) {
                 console.error('Faltan campos requeridos');
@@ -169,110 +169,71 @@
                 for (const file of thumbnailsInput.files) {
                     formData.append('thumbnails', file);
                 }
-
-                // Obtener el token de la cookie
-                const token = getCookie('TOMAS_APP_cookie');
-                if (!token) {
-                    console.error('Token no encontrado en cookies');
-                    return;
-                }
+                console.log('form data:', formData)
+                const token = '{{authToken}}'; // Token de autenticación pasado desde el backend
 
                 const response = await fetch('/api/products/create', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        // No agregues 'Content-Type': 'application/json' aquí
                     },
-                    credentials: 'include',
-                    body: formData,
+                    body: formData // Aquí el formData contiene todo lo que necesitas
                 });
 
                 if (response.ok) {
                     document.getElementById('formulario-producto').reset();
+                    const nuevoProducto = await response.json();
                     socketClient.emit('nuevoProducto', nuevoProducto);
+                    alert('Producto agregado exitosamente!');
                 } else {
                     const errorMessage = await response.json();
                     console.error('Error al agregar el producto:', errorMessage);
+                    alert('Hubo un error al agregar el producto. Verifica los datos ingresados.');
                 }
             } catch (error) {
                 console.error('Error al agregar el producto:', error.message);
+                alert('Ocurrió un error inesperado. Por favor, intenta de nuevo.');
             }
         });
+
 
         // Escuchar eventos del servidor Socket.IO para nuevos productos
         socketClient.on('nuevoProducto', data => {
             if (data && data.product) {
                 const nuevoProducto = data.product;
 
-                // Crear un nuevo elemento de la lista con la información del nuevo producto
                 const nuevoItem = document.createElement('li');
                 nuevoItem.textContent = `${nuevoProducto.title} ($${nuevoProducto.price})`;
                 nuevoItem.classList.add('list-group-item');
 
-                // Agregar un icono de papelera para eliminar el producto
                 const deleteIcon = document.createElement('span');
                 deleteIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                         <path d="M3 5V3h10v2H3z"/>
-                        <path fill-rule="evenodd" d="M5.5 0a.5.5 0 0 1 .5.5V1h4V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v1H1V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6zm5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 1 0v-4a.5.5 0 0 0-.5-.5zm2 0a.5.5 0 0 0-.5.5v4a.5.5 0 0 0 1 0v-4a.5.5 0 0 0-.5-.5z"/>
+                        <path fill-rule="evenodd" d="M5.5 0a.5.5 0 0 1 .5.5V1h4V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v1H1V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 5v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V5H1zm12 9H3V6h10v8z"/>
                     </svg>`;
-                deleteIcon.classList.add('delete-product');
-                deleteIcon.setAttribute('data-product-id', nuevoProducto.id);
-
-                // Agregar el icono de papelera al elemento del producto
-                nuevoItem.appendChild(deleteIcon);
-
-                // Agregar el nuevo elemento de la lista
-                productsList.appendChild(nuevoItem);
-
-                // Agregar evento de clic al icono de papelera para eliminar el producto
-                deleteIcon.addEventListener('click', async (event) => {
-                    event.preventDefault(); // Prevenir el comportamiento predeterminado del evento
-
-                    const productId = event.currentTarget.getAttribute('data-product-id');
-                    const listItemToDelete = event.currentTarget.parentElement; // Obtener el elemento padre del icono de eliminar
-
+                deleteIcon.classList.add('delete-icon');
+                deleteIcon.addEventListener('click', async () => {
                     try {
-                        // Realizar una solicitud al servidor para eliminar el producto
-                        const response = await fetch(`/api/products/${productId}`, {
-                            method: 'DELETE'
+                        const response = await fetch(`/api/products/${nuevoProducto._id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${authToken}`
+                            }
                         });
 
                         if (response.ok) {
-                            // Eliminar el elemento de la lista en el cliente
-                            listItemToDelete.remove();
-
-                            // Enviar el ID del producto eliminado al servidor para emitir el evento 'productoEliminado'
-                            socketClient.emit('productoEliminado', { id: productId });
+                            nuevoItem.remove();
                         } else {
-                            console.error('Error al eliminar el producto:', response.statusText);
+                            console.error('Error al eliminar el producto');
                         }
                     } catch (error) {
                         console.error('Error al eliminar el producto:', error.message);
                     }
                 });
-            } else {
-                console.error('Datos recibidos no válidos:', data);
-            }
-        });
 
-        // Escuchar eventos del servidor Socket.IO para productos eliminados
-        socketClient.on('productoEliminado', data => {
-            if (data && data.id) {
-                const productId = data.id; // Obtener el ID del producto
-
-                // Buscar el elemento de la lista que coincide con el ID del producto eliminado
-                const listItemToDelete = document.querySelector(`[data-product-id="${productId}"]`);
-
-                // Verificar si se encontró el elemento
-                if (listItemToDelete) {
-                    const parentElement = listItemToDelete.parentElement; // Obtener el elemento padre (la lista)
-
-                    // Verificar si el elemento padre existe
-                    if (parentElement) {
-                        parentElement.removeChild(listItemToDelete); // Eliminar el elemento de la lista
-                    } else {
-                        console.error('Error: El elemento padre no existe');
-                    }
-                }
+                nuevoItem.appendChild(deleteIcon);
+                productsList.appendChild(nuevoItem);
             }
         });
     });

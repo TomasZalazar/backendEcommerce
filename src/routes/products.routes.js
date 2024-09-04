@@ -8,6 +8,7 @@ import CustomError from '../services/CustomError.class.js';
 
 
 
+
 const products = Router();
 
 products.param('id', async (req, res, next, id) => {
@@ -23,14 +24,13 @@ next();
 });
 
 
-
 // Rutas públicas
 products.get('/paginate', paginateProducts);
 products.get('/', getAllProducts);
 products.get('/:id', getProductById);
 
 // Rutas protegidas para administradores
-products.post('/create', verifyToken,handlePolicies(['admin','premium']), verifyRequiredBody(['title', 'description', 'price', 'stock', 'category']), uploader.array('thumbnails', 4), createProduct);
+products.post('/create', verifyToken, handlePolicies(['admin','premium']), verifyRequiredBody(['title', 'description', 'price', 'stock', 'category', 'code']), uploader.fields('thumbnails', 3),createProduct);
 
 
 products.put('/:id', verifyToken, handlePolicies(['admin']), updateProduct);

@@ -1,9 +1,10 @@
 import mongoose from 'mongoose';
 import { errorsDictionary } from '../../config.js';
 
+
 class ProductManager {
     constructor(ProductModel) {
-        this.ProductModel = ProductModel;
+        this.ProductModel = ProductModel; // Asegúrate de que esta es la misma instancia que usas
     }
 
     async getAll(limit) {
@@ -60,7 +61,7 @@ class ProductManager {
             return { status: 400, origin: 'DAO', payload: { error: errorsDictionary.INVALID_MONGOID_FORMAT } };
         }
         try {
-            const updatedProduct = await this.ProductModel.findByIdAndUpdate(id, productData, { new: true });   
+            const updatedProduct = await this.ProductModel.findByIdAndUpdate(id, productData, { new: true });
             if (updatedProduct) {
                 return { status: 200, origin: 'DAO', payload: updatedProduct };
             } else {

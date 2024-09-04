@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Documentos</title>
+    <style>
+        .hidden {
+            display: none;
+        }
+
+        .p {
+            margin-top: 4%;
+            font-weight: 500;
+        }
+
+        .espacio {
+            margin: 2%;
+        }
+
+        .docs {
+            font-size: large;
+            font-weight: bold;
+        }
+
+        .tick {
+            color: green;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            margin: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 1rem;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .btn-close {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #ccc;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <h2 class="espacio">Para volverte Premium necesitas cargar los siguientes documentos:</h2>
+            <ul>
+                <li id="identificacion" class="espacio docs">- Identificación:</li>
+                <form id="identificacionForm" method="POST" enctype="multipart/form-data">
+                    <input type="file" class="btn" name="documentsFiles" multiple>
+                    <button type="submit" class="btn btn-primary">Cargar identificación</button>
+                </form>
+
+                <li id="domicilio" class="espacio docs">- Comprobante de domicilio:</li>
+                <form id="domicilioForm" method="POST" enctype="multipart/form-data">
+                    <input type="file" class="btn" name="documentsFiles" multiple>
+                    <button type="submit" class="btn btn-primary">Cargar comprobante</button>
+                </form>
+
+                <li id="cuenta" class="espacio docs">- Comprobante de estado de cuenta:</li>
+                <form id="cuentaForm" method="POST" enctype="multipart/form-data">
+                    <input type="file" class="btn" name="documentsFiles" multiple>
+                    <button type="submit" class="btn btn-primary">Cargar comprobante</button>
+                </form>
+            </ul>
+            <button id="confirmButton" class="btn btn-primary hidden">He enviado todos los archivos</button>
+            <h1 id="confirmationMessage" class="hidden"></h1>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('identificacionForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            uploadDocument(this, 'identificacion');
+        });
+        document.getElementById('domicilioForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            uploadDocument(this, 'domicilio');
+        });
+        document.getElementById('cuentaForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            uploadDocument(this, 'cuenta');
+        });
+
+        const requiredDocuments = ['identificacion', 'domicilio', 'cuenta'];
+        const uploadedDocuments = new Set();
+
+        function uploadDocument(form, docId) {
+            const userId = '{{userId}}'; // Asegúrate de que este valor se pase correctamente
+            const actionUrl = `/api/users/${userId}/documents`;
+            const formData = new FormData(form);
+
+            fetch(actionUrl, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log('Estado de la respuesta:', response.status); // Verifica el estado de la respuesta
+                return response.json();
+            })
+            .then(data => {
+                console.log('Respuesta del servidor:', data); // Verifica la respuesta completa
+                if (data && data.status === 'OK') { // Ajusta la condición para coincidir con la respuesta del servidor
+                    document.getElementById(docId).innerHTML += ' <span class="tick">✔</span>';
+                    uploadedDocuments.add(docId);
+
+                    // Verificar si todos los documentos han sido cargados
+                    if (requiredDocuments.every(doc => uploadedDocuments.has(doc))) {
+                        console.log('Todos los documentos cargados. Mostrando botón de confirmación.');
+                        document.getElementById('confirmButton').classList.remove('hidden');
+                    }
+                } else {
+                    console.error('Estado de respuesta no es éxito:', data.status);
+                }
+            })
+            .catch(error => {
+                console.error('Error al subir el documento:', error);
+            });
+        }
+
+        document.getElementById('confirmButton').addEventListener('click', function() {
+            document.getElementById('confirmationMessage').innerText = 'Tus archivos fueron cargados. Serán revisados por un administrador para pasarte de rol a Premium.';
+            document.getElementById('confirmationMessage').classList.remove('hidden');
+            document.getElementById('confirmButton').classList.add('hidden'); // Ocultar el botón después de hacer clic
+        });
+    </script>
+</body>
+</html>

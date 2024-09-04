@@ -1,4 +1,4 @@
-import { createHash, isValidPassword, createToken, verifyToken } from '../services/utils.js';
+import { createHash} from '../services/utils.js';
 import UserManager from '../models/dao/userManager.mdb.js';
 import userModel from '../models/users.model.js';
 import  config  from '../config.js';
@@ -90,6 +90,7 @@ export const toggleUserRole = async (req, res) => {
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).send({ origin: config.SERVER, payload: null, error: 'ID inválido.' });
         }
+
         if (req.user._id.toString() === id) {
             return res.status(403).send({ origin: config.SERVER, payload: null, error: 'No puedes modificar tu propio rol.' });
         }
@@ -100,14 +101,52 @@ export const toggleUserRole = async (req, res) => {
             return res.status(404).send({ origin: config.SERVER, payload: null, error: 'Usuario no encontrado.' });
         }
 
-        // Alternar el rol del usuario
+        if (user.payload.role === 'user') {
+            const { identification, addressProof, accountProof } = user.payload.documents;
+
+            if (!identification || !addressProof || !accountProof) {
+                return res.status(400).send({ origin: config.SERVER, payload: null, error: 'El usuario no ha terminado de procesar su documentación.' });
+            }
+        }
+
         const newRole = user.payload.role === 'premium' ? 'user' : 'premium';
         
-        // Actualizar el rol del usuario
         const updatedUser = await userManager.update(id, { role: newRole });
 
         res.status(updatedUser.status).send(updatedUser.payload || { error: updatedUser.error });
     } catch (err) {
         res.status(500).send({ origin: config.SERVER, payload: null, error: err.message });
+    }
+};
+
+export const uploadDocuments = async (req,res)=>{
+    const files = req.files
+    try{
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).send({ status: 'ERROR', payload: 'No se cargaron archivos' });
+        }
+
+        const uploadedFiles = files.map(file => file.originalname);
+        const type = req.params.typeDoc
+        const uid = req.user._id
+
+        // Construir el array de documentos a añadir
+        const documents = files.map(file => ({
+            name: type,
+            reference: file.path 
+        }));
+
+        // Actualizar el usuario
+        await userManager.update(
+            uid,
+            { $push: { documents: { $each: documents } } }
+        );
+
+        res.status(200).send({ status: 'OK', payload: 'Documentos cargados', files: uploadedFiles });
+
+
+    }catch (error){
+        console.error('Error al crear el usuario:', error);
+        res.status(500).send('Error del servidor');
     }
 };

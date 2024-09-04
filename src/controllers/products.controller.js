@@ -41,18 +41,19 @@ export const getProductById = async (req, res, next) => {
 };
 
 export const createProduct = async (req, res, next) => {
+    console.log('Archivos subidos:', req.files);  
+    console.log('lo que viene en el req.body', req.body)
+    
     const { title, description, price, code, stock, category } = req.body;
-
     if (!title || !description || !price || !code || !stock || !category) {
         return res.status(400).json({ error: errorsDictionary.FEW_PARAMETERS.message });
     }
-    
-    const thumbnails = req.files ? req.files.map(file => file.filename) : [];
-
+     
     try {
+        const thumbnails = req.files.map(file => config.STORAGE === 'cloud' ? file.path : file.filename);
+        console.log(thumbnails);
         const user = req.user;
-
-        if(user.role === 'premium' || user.role === 'admin'){
+        if (user.role === 'premium' || user.role === 'admin') {
             const newProduct = {
                 title,
                 description,
@@ -63,16 +64,17 @@ export const createProduct = async (req, res, next) => {
                 thumbnails: thumbnails || [],
                 owner: user.role === 'premium' ? user.email : 'admin'
             };
-            
             const addedProduct = await service.create(newProduct);
-            res.status(201).json(addedProduct);
-        }else {
+            res.status(201).send({addedProduct, files: req.files});
+        } else {
             return res.status(403).json({ error: 'No tienes permiso para crear productos.' });
         }
     } catch (error) {
+        console.error('Error:', error);
         next(new CustomError(errorsDictionary.PRODUCT_CREATE_ERROR));
     }
 };
+
 
 export const updateProduct = async (req, res, next) => {
     try {

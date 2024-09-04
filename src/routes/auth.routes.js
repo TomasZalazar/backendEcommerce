@@ -1,10 +1,15 @@
 import { Router } from 'express';
 import config from '../config.js';
-import { adminAuth, verifyAuthorization } from '../services/adminAuth.js';
+import { verifyAuthorization } from '../services/adminAuth.js';
 import { createHash, verifyRequiredBody, createToken, verifyToken } from '../services/utils.js';
 
 import passport from 'passport';
 import { passportCall } from '../auth/passport.strategies.js';
+import moment from 'moment';
+import UserManager from '../models/dao/userManager.mdb.js';
+import userModel from '../models/users.model.js'
+
+const userManager = new UserManager(userModel);
 
 const router = Router();
 
@@ -26,7 +31,7 @@ router.post('/login', verifyRequiredBody(['email', 'password']),
         if (!req.user) {
             return res.status(401).json({ error: 'Usuario o clave no válidos' });
         }
-        
+
         res.status(200).json({ message: 'Inicio de sesión exitoso', user: req.user });
     }
 );
@@ -59,7 +64,7 @@ router.get('/ghlogincallback',
     passport.authenticate('ghlogin',
         { failureRedirect: `/login?error=${encodeURI('Error al identificar con Github')}` }), async (req, res) => {
             try {
-                req.session.user = req.user // req.user es inyectado AUTOMATICAMENTE por Passport al parsear el done()
+                req.session.user = req.user
 
                 req.session.save(err => {
                     if (err) return res.status(500).send({ origin: config.SERVER, payload: null, error: err.message });
@@ -71,18 +76,34 @@ router.get('/ghlogincallback',
             }
         });
 
-router.post('/jwtlogin', verifyRequiredBody(['email', 'password']), passport.authenticate('login', { session: false }), (req, res) => {
+router.post('/jwtlogin', verifyRequiredBody(['email', 'password']), passport.authenticate('login', { session: false }), async (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Usuario o clave no válidos' });
     }
-    const token = createToken(req.user, '1h');
-    res.cookie(`${config.APP_NAME}_cookie`, token, { maxAge: 60 * 60 * 1000, httpOnly: true });
-    
-    res.status(200).json({ message: 'Inicio de sesión exitoso'});
+
+    try {
+        // Crear el token
+        const token = createToken(req.user, '1h');
+        res.cookie(`${config.APP_NAME}_cookie`, token, { maxAge: 60 * 60 * 1000, httpOnly: true });
+
+        
+        const formattedDate = moment().format('YYYY-MM-DD HH:mm:ss');
+        const result = await userManager.update(req.user._id, { last_connection: formattedDate });
+
+        if (result.status !== 200) {
+            return res.status(result.status).json({ error: result.error });
+        }
+
+        res.status(200).json({ message: 'Inicio de sesión exitoso' });
+
+    } catch (error) {
+        return res.status(500).json({ error: 'Error al procesar la solicitud de inicio de sesión' });
+    }
 });
 
 
-router.get('/current', 
+
+router.get('/current',
     passportCall('current'), // Utiliza passportCall en lugar de verifyToken
     async (req, res) => {
         try {

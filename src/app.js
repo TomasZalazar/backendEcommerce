@@ -6,6 +6,7 @@ import session from 'express-session'
 import passport from 'passport'
 import MongoStore from 'connect-mongo'
 import cors from 'cors'
+import bodyParser from 'body-parser'
 
 // routes
 
@@ -21,6 +22,7 @@ import MongoSingleton from './services/mongo.singleton.js'
 import errorsHandler from './services/errors.handler.js'
 import cookieRouter from './routes/cookies.routes.js'
 import protectedRoutes from './routes/recover.routes.js'
+import uploadRouter from './routes/upload.routes.js'
 
 import { addLogger, logHttpRequests } from './services/logger.js'
 import swaggerJsdoc from 'swagger-jsdoc';
@@ -28,6 +30,8 @@ import swaggerUiExpress from 'swagger-ui-express';
 
 const app = express()
 
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 const expressInstance = app.listen(config.PORT, async () => {
     MongoSingleton.getInstance()
@@ -40,8 +44,8 @@ const expressInstance = app.listen(config.PORT, async () => {
     //configuracion del server
     // app.use(logger('dev'))
     app.disable('x-powered-by')
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: true }));
+    // app.use(express.json());
+    // app.use(express.urlencoded({ extended: true }));
     app.use(cookieParser(config.SECRET));
 
     //sessions
@@ -64,7 +68,7 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.set('view engine', 'handlebars');
     // Habilita CORS
     app.use(cors({
-        origin: 'http://localhost:5173', 
+        origin: '*', 
         credentials: true 
     }));
 
@@ -91,6 +95,7 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.use('/api/auth', authRoutes)
     app.use('/api/cookies', cookieRouter);
     app.use('/api/recover', protectedRoutes);
+    app.use('/upload', uploadRouter);
 
 
     app.use('/static', express.static(`${config.DIRNAME}/public`))
