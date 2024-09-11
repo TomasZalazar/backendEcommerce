@@ -4,7 +4,8 @@
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "start": "node --watch --env-file .env.devel  src/app --mode=devel",
+    "start": "node src/app.js",
+    "dev": "node --watch --env-file .env.devel  src/app --mode=devel",
     "prod": "node --watch --env-file .env.prod  src/app --mode=prod",
     "users": "mocha src/test/users.test.js",
     "products": "mocha src/test/products.test.js",
