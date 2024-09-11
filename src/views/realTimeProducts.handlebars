@@ -44,16 +44,6 @@
 <!-- Formulario para agregar un nuevo producto -->
 <div class="container-">
     <div class="row">
-        <div class="col-md-6">
-            <h1>Listado de productos</h1>
-            <ul id="productsList" class="list-group">
-                {{#each products}}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>{{this.title}} ($ {{this.price}})</span>
-                </li>
-                {{/each}}
-            </ul>
-        </div>
 
         <div class="col-md-6">
             <h1>Agregar Producto</h1>
@@ -114,8 +104,7 @@
                 }
 
                 try {
-                    const token = localStorage.getItem('token');
-                    console.log(token)
+                    const token = '{{authToken}}'; // Token de autenticación
 
                     const response = await fetch(`/api/cart/${cartId}/products/${productId}`, {
                         method: 'POST',
@@ -123,19 +112,24 @@
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${token}`
                         },
-                        body: JSON.stringify({ qty: 1 })
+                        body: JSON.stringify({ qty: 1 }) // Enviar qty en el cuerpo de la solicitud
                     });
 
+                    const result = await response.json();
+
                     if (response.ok) {
-                        console.log('Producto agregado al carrito con éxito');
+                        console.log('Producto agregado al carrito con éxito:', result);
+                        // Actualizar la UI si es necesario
                     } else {
-                        console.error('Error al agregar producto al carrito:', response.statusText);
+                        console.error('Error al agregar producto al carrito:', result.error || response.statusText);
                     }
                 } catch (error) {
                     console.error('Error al conectar con el servidor:', error.message);
                 }
             });
         });
+
+
 
         document.getElementById('agregar-producto-btn').addEventListener('click', async (event) => {
             event.preventDefault();

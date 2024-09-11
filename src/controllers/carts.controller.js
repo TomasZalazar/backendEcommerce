@@ -67,7 +67,8 @@ export const deleteCart = async (req, res) => {
 };
 
 export const addProductToCart = async (req, res) => {
-    const { cartId, productId, qty } = req.params;
+    const { cartId, productId } = req.params;
+    const { qty } = req.body; // Obtener qty del cuerpo de la solicitud
     const user = req.user;
 
     if (!cartId || !productId || !qty || !user) {
