@@ -128,6 +128,22 @@ views.get('/cartUser', verifyToken, async (req, res) => {
         res.status(500).send(`Error interno del servidor: ${error.message}`);
     }
 });
+router.get('/home',  async (req, res) => {
+    try {
+        const products = await productModel.find().limit(3).lean();  // Mostrar 3 productos destacados
+        const authToken = req.cookies['TOMAS_APP_cookie'];
+
+        res.render('home', {
+            user: req.user,  // Información del usuario
+            products,        // Productos destacados
+            authToken        // Token de autenticación
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error interno del servidor');
+    }
+});
+
 
 
 
