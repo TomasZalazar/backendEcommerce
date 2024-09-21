@@ -1,6 +1,6 @@
 import ProductManager from '../models/dao/productManager.mdb.js';
 import ProductModel from '../models/products.model.js';
-import CustomError from '../services/CustomError.class.js'; // Asegúrate de tener esta clase para manejar los errores
+import CustomError from '../services/CustomError.class.js'; 
 import config, { errorsDictionary } from '../config.js';
 
 const service = new ProductManager(ProductModel);
@@ -96,18 +96,15 @@ export const deleteProduct = async (req, res, next) => {
         const { email, role } = req.user;
         // req.logger.info(`Intentando eliminar producto con id: ${pid} por usuario: ${email} con rol: ${role}`);
         let proceedWithDelete = true;
-        // Verifica la existencia del producto antes de continuar
         const product = await service.getById(pid);
         if (!product) {
             // req.logger.warn(`Producto no encontrado con id: ${pid}`);
             throw new CustomError(errorsDictionary.PRODUCT_NOT_FOUND);
         }
-        // Si el usuario es premium, verifica la propiedad del producto
         if (role === 'premium') {
             proceedWithDelete = await checkOwnership(pid, email);
             // req.logger.info(`¿El usuario es propietario del producto? ${proceedWithDelete}`);
         }
-        // Si el usuario tiene permiso para eliminar, procede a eliminar el producto
         if (proceedWithDelete) {
             const result = await service.delete(pid);
             if (!result.payload) {

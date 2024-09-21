@@ -130,13 +130,12 @@ export const uploadDocuments = async (req,res)=>{
         const type = req.params.typeDoc
         const uid = req.user._id
 
-        // Construir el array de documentos a añadir
         const documents = files.map(file => ({
             name: type,
             reference: file.path 
         }));
 
-        // Actualizar el usuario
+
         await userManager.update(
             uid,
             { $push: { documents: { $each: documents } } }

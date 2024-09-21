@@ -11,14 +11,14 @@ import userModel from '../models/users.model.js'
 
 const userManager = new UserManager(userModel);
 
-const router = Router();
+const auth = Router();
 
 
-router.get('/hash/:password', async (req, res) => {
+auth.get('/hash/:password', async (req, res) => {
     res.status(200).send({ origin: config.SERVER, payload: createHash(req.params.password) });
 });
 
-router.post('/register', verifyRequiredBody(['firstName', 'lastName', 'email', 'password']),
+auth.post('/register', verifyRequiredBody(['firstName', 'lastName', 'email', 'password']),
     passport.authenticate('register', { session: false }), (req, res) => {
         if (!req.user) {
             return res.status(400).json({ error: 'El usuario ya existe' });
@@ -26,7 +26,7 @@ router.post('/register', verifyRequiredBody(['firstName', 'lastName', 'email', '
         res.status(201).json({ message: 'Usuario registrado exitosamente', user: req.user });
     }
 );
-router.post('/login', verifyRequiredBody(['email', 'password']),
+auth.post('/login', verifyRequiredBody(['email', 'password']),
     passport.authenticate('login', { session: false }), (req, res) => {
         if (!req.user) {
             return res.status(401).json({ error: 'Usuario o clave no válidos' });
@@ -36,7 +36,7 @@ router.post('/login', verifyRequiredBody(['email', 'password']),
     }
 );
 // Ruta de login con Passport
-router.post('/pplogin', verifyRequiredBody(['email', 'password']),
+auth.post('/pplogin', verifyRequiredBody(['email', 'password']),
     passport.authenticate('login', { failureRedirect: `/login?error=${encodeURI('Usuario o clave no válidos')}` }),
     async (req, res) => {
         try {
@@ -54,29 +54,75 @@ router.post('/pplogin', verifyRequiredBody(['email', 'password']),
             res.status(500).send({ origin: config.SERVER, payload: null, error: err.message });
         }
     });
+// Ruta para iniciar el flujo de autenticación con Google
+auth.get('/googlelogin',
+    passport.authenticate('googlelogin', { scope: ['profile', 'email'] })
+);
 
+// Ruta para manejar la respuesta de Google después de la autenticación
+auth.get('/googlecallback',
+    passport.authenticate('googlelogin', { failureRedirect: '/login?error=Error+al+identificar+con+Google' }),
+    async (req, res) => {
+        if (!req.user) {
+            return res.status(401).json({ error: 'Usuario no autenticado' });
+        }
+  
+        const payload = req.user._doc; 
 
-router.get('/ghlogin',
+        try {
+            const token = createToken(payload, '1h');
+            res.cookie(`${config.APP_NAME}_cookie`, token, { maxAge: 60 * 60 * 1000, httpOnly: true });
+
+            const formattedDate = moment().format('YYYY-MM-DD HH:mm:ss');
+            const result = await userManager.update(req.user._id, { last_connection: formattedDate });
+
+            if (result.status !== 200) {
+                return res.status(result.status).json({ error: result.error });
+            }
+
+            res.redirect('/home');
+        } catch (error) {
+            res.status(500).json({ error: 'Error al procesar la solicitud de inicio de sesión', details: error.message });
+        }
+    }
+);
+
+auth.get('/ghlogin',
     passport.authenticate('ghlogin', { scope: ['user'] }), async (req, res) => {
     });
 
-router.get('/ghlogincallback',
-    passport.authenticate('ghlogin',
-        { failureRedirect: `/login?error=${encodeURI('Error al identificar con Github')}` }), async (req, res) => {
-            try {
-                req.session.user = req.user
+auth.get('/ghlogincallback',
+    passport.authenticate('ghlogin', { failureRedirect: '/login?error=Error+al+identificar+con+Github' }),
+    async (req, res) => {
+        if (!req.user) {
+            return res.status(401).json({ error: 'Usuario no autenticado' });
+        }
 
-                req.session.save(err => {
-                    if (err) return res.status(500).send({ origin: config.SERVER, payload: null, error: err.message });
+        const payload = req.user._doc; 
+        console.log('Payload para el token:', payload);
 
-                    res.redirect('/realtimeproducts');
-                });
-            } catch (err) {
-                res.status(500).send({ origin: config.SERVER, payload: null, error: err.message });
+        try {
+            const token = createToken(payload, '1h');
+            res.cookie(`${config.APP_NAME}_cookie`, token, { maxAge: 60 * 60 * 1000, httpOnly: true });
+
+            const formattedDate = moment().format('YYYY-MM-DD HH:mm:ss');
+            const result = await userManager.update(req.user._id, { last_connection: formattedDate });
+
+            if (result.status !== 200) {
+                return res.status(result.status).json({ error: result.error });
             }
-        });
 
-router.post('/jwtlogin', verifyRequiredBody(['email', 'password']), passport.authenticate('login', { session: false }), async (req, res) => {
+            res.redirect('/home')
+        } catch (error) {
+            res.status(500).json({ error: 'Error al procesar la solicitud de inicio de sesión', details: error.message });
+        }
+    }
+);
+
+
+
+
+auth.post('/jwtlogin', verifyRequiredBody(['email', 'password']), passport.authenticate('login', { session: false }), async (req, res) => {
     if (!req.user) {
         return res.status(401).json({ error: 'Usuario o clave no válidos' });
     }
@@ -86,7 +132,7 @@ router.post('/jwtlogin', verifyRequiredBody(['email', 'password']), passport.aut
         const token = createToken(req.user, '1h');
         res.cookie(`${config.APP_NAME}_cookie`, token, { maxAge: 60 * 60 * 1000, httpOnly: true });
 
-        
+
         const formattedDate = moment().format('YYYY-MM-DD HH:mm:ss');
         const result = await userManager.update(req.user._id, { last_connection: formattedDate });
 
@@ -94,16 +140,15 @@ router.post('/jwtlogin', verifyRequiredBody(['email', 'password']), passport.aut
             return res.status(result.status).json({ error: result.error });
         }
 
-        res.status(200).json({ message: 'Inicio de sesión exitoso' });
 
+        res.status(200).json({ message: 'Inicio de sesión exitoso', redirect: '/home' });
     } catch (error) {
         return res.status(500).json({ error: 'Error al procesar la solicitud de inicio de sesión' });
     }
 });
 
 
-
-router.get('/current',
+auth.get('/current',
     passportCall('current'), // Utiliza passportCall en lugar de verifyToken
     async (req, res) => {
         try {
@@ -116,7 +161,7 @@ router.get('/current',
         }
     }
 );
-// router.get('/current', passport.authenticate('current', { failureRedirect: `/current?error=${encodeURI('No hay un token registrado')}`}), async (req, res) => {
+// auth.get('/current', passport.authenticate('current', { failureRedirect: `/current?error=${encodeURI('No hay un token registrado')}`}), async (req, res) => {
 //     try {
 //         const currentToken = req.user // Asumiendo que req.user ya contiene los datos que quieres enviar
 //         const { password, role, _id, ...filteredCurrent } = currentToken;
@@ -126,14 +171,14 @@ router.get('/current',
 //     }
 // });
 
-router.get('/private', verifyToken, verifyAuthorization('admin'), async (req, res) => {
+auth.get('/private', verifyToken, verifyAuthorization('admin'), async (req, res) => {
     try {
         res.status(200).send({ origin: config.SERVER, payload: 'Bienvenido ADMIN!' });
     } catch (err) {
         res.status(500).send({ origin: config.SERVER, error: err.message });
     }
 });
-router.get('/ppadmin', passportCall('jwtlogin'), verifyAuthorization('admin'), async (req, res) => {
+auth.get('/ppadmin', passportCall('jwtlogin'), verifyAuthorization('admin'), async (req, res) => {
     try {
         res.status(200).send({ origin: config.SERVER, payload: 'Bienvenido ADMIN!' });
     } catch (err) {
@@ -142,14 +187,14 @@ router.get('/ppadmin', passportCall('jwtlogin'), verifyAuthorization('admin'), a
 });
 
 // Logout endpoint para manejar tanto sesiones como JWT
-router.get('/logout', (req, res) => {
+auth.get('/logout', (req, res) => {
     req.logout((err) => {
         if (err) {
             return res.status(500).json({ error: 'Error al ejecutar logout' });
         }
         res.clearCookie(`${config.APP_NAME}_cookie`);
-        res.status(200).json({ message: 'Logout exitoso' });
+        res.redirect('/login')
     });
 });
 
-export default router;
+export default auth;

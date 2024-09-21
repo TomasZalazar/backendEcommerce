@@ -1,7 +1,7 @@
 // dependencias
 import express from 'express'
 import cookieParser from 'cookie-parser'
-import handlebars from 'express-handlebars'
+import exphbs from 'express-handlebars'
 import session from 'express-session'
 import passport from 'passport'
 import MongoStore from 'connect-mongo'
@@ -62,8 +62,13 @@ const expressInstance = app.listen(config.PORT, async () => {
     app.use(passport.session())
 
 
-    // motor plantilla config 
-    app.engine('handlebars', handlebars.engine());
+    // Configura Handlebars como motor de plantillas
+const handlebars = exphbs.create({
+    runtimeOptions: {
+        allowProtoPropertiesByDefault: true, // Permitir acceso a propiedades del prototipo
+    },
+});
+    app.engine('handlebars', handlebars.engine);
     app.set('views', `${config.DIRNAME}/views`);
     app.set('view engine', 'handlebars');
     // Habilita CORS

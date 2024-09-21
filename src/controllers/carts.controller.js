@@ -21,7 +21,7 @@ export const purchaseCart =  async (req, res) => {
     }
 
     try {
-        // Ejecutar la validación y compra
+        
         const result = await service.purchaseCart(cartId, user);
 
         if (result.status === 200) {
@@ -68,7 +68,7 @@ export const deleteCart = async (req, res) => {
 
 export const addProductToCart = async (req, res) => {
     const { cartId, productId } = req.params;
-    const { qty } = req.body; // Obtener qty del cuerpo de la solicitud
+    const { qty } = req.body; 
     const user = req.user;
 
     if (!cartId || !productId || !qty || !user) {
@@ -81,7 +81,6 @@ export const addProductToCart = async (req, res) => {
             return res.status(404).send({ error: 'Product not found' });
         }
 
-        // Verificar si el usuario es premium y si el producto le pertenece
         if (user.role === 'premium') {
             const isOwner = await checkOwnership(productId, user.email);
             if (isOwner) {
@@ -89,7 +88,6 @@ export const addProductToCart = async (req, res) => {
             }
         }
 
-        // Ejecutar la lógica para agregar el producto al carrito
         const result = await service.addProductToCart(cartId, productId, qty);
         if (result.status === 200) {
             return res.status(200).send({ payload: 'Product added to cart successfully' });

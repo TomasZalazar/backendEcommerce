@@ -1,23 +1,284 @@
-<div class="container">
-    <h1>Carrito de Compras</h1>
-    <p>Id del carrito: {{cart._id}}</p>
-    <p>Usuario:</p>
-    <ul>
-        <li>
-            <p>Id: {{cart._user_id._id}}</p>
-        </li>
-    </ul>
-    <p>Productos:</p>
-    <div class="product-cards">
-        {{#each cart.products}}
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">{{this._id.title}}</h5>
-                <p class="card-text">Precio: ${{this._id.price}}</p>
-                <p class="card-text">Cantidad: {{this.qty}}</p>
-                <p class="card-text">Categoria: {{this._id.category}}</p>
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito de Compras Mejorado</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .cart-item img {
+            width: 100px;
+            height: auto;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .cart-summary {
+            text-align: right;
+        }
+
+        #cart-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Listado de productos -->
+        <h1 class="mt-4">Listado de productos</h1>
+        <div class="row">
+            {{#each products}}
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img class="card-img-top" src="{{thumbnails.[0]}}" alt="Imagen del producto">
+                    <div class="card-body">
+                        <h6 class="card-title">{{title}}</h6>
+                        <p class="card-text">ID: {{_id}}</p>
+                        <p class="card-text">Precio: ${{price}}</p>
+                        <p class="card-text">Stock: {{stock}}</p>
+                        <button class="btn btn-primary add-to-cart" data-productid="{{_id}}">Agregar al carrito</button>
+                    </div>
+                </div>
             </div>
+            {{/each}}
         </div>
-        {{/each}}
+
+        <!-- Carrito de compras -->
+        <h2 class="mt-5">Tu Carrito</h2>
+        <div id="cart" class="cart">
+            {{#if cart.products.length}}
+            {{#each cart.products}}
+            <div class="cart-item">
+                <img src="{{this.product.thumbnails.[0]}}" alt="{{this.product.title}}">
+                <div>
+                    <h5>{{this.product.title}}</h5>
+                    <p>Precio: ${{this.product.price}}</p>
+                </div>
+                <div class="quantity-control">
+                    <button class="btn btn-sm btn-outline-secondary"
+                        onclick="updateQuantity('{{this.product._id}}', -1)">-</button>
+                    <input type="number" value="{{this.qty}}" class="form-control d-inline" style="width: 60px;"
+                        onchange="setQuantity('{{this.product._id}}', this.value)">
+                    <button class="btn btn-sm btn-outline-secondary"
+                        onclick="updateQuantity('{{this.product._id}}', 1)">+</button>
+                </div>
+                <button class="btn btn-danger" onclick="removeFromCart('{{this.product._id}}')">Eliminar</button>
+            </div>
+            {{/each}}
+            <div class="cart-summary">
+                <h4>Total: ${{cart.total}}</h4>
+                <button class="btn btn-success" onclick="checkout()">Finalizar compra</button>
+            </div>
+            {{else}}
+            <p class="mt-4">El carrito está vacío</p>
+            {{/if}}
+        </div>
     </div>
-</div>
+
+    <!-- Popup -->
+    <div id="cart-popup">
+        <h3>Producto Añadido al Carrito</h3>
+        <div id="popup-content"></div>
+        <button class="btn btn-secondary" onclick="closePopup()">Seguir Comprando</button>
+        <button class="btn btn-primary" onclick="viewCart()">Ver Carrito</button>
+        <div class="cart-summary">
+            <h4>Total: ${{cart.total}}</h4>
+            <button class="btn btn-success" onclick="checkout()">Finalizar compra</button>
+        </div>
+
+    </div>
+
+    <script>
+        const authToken = '{{authToken}}';
+        const cartId = '{{cartId}}';
+        const productId = button.getAttribute('data-productid');
+
+        // Agregar producto al carrito
+        async function addToCart(productId) {
+            try {
+                const response = await fetch(`/api/cart/${cartId}/products/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (response.ok) {
+                    const product = await response.json();
+                    showPopup(product);
+                    updateCart();
+                } else {
+                    console.error("Error al agregar el producto:", await response.text());
+                }
+            } catch (error) {
+                console.error("Error en la solicitud de agregar producto:", error);
+            }
+        }
+
+        // Actualizar el carrito
+        async function updateCart() {
+            try {
+                const response = await fetch(`/api/cart/${cartId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al obtener el carrito.');
+                }
+
+                const cart = await response.json();
+                renderCart(cart);
+            } catch (error) {
+                console.error('Error al actualizar el carrito:', error);
+            }
+        }
+
+        // Renderizar carrito
+        function renderCart(cart) {
+            const cartDiv = document.getElementById('cart');
+            const summaryDiv = document.querySelector('.cart-summary');
+
+            if (cart.products.length === 0) {
+                cartDiv.innerHTML = '<p>El carrito está vacío</p>';
+                summaryDiv.innerHTML = '';
+            } else {
+                cartDiv.innerHTML = cart.products.map(item => `
+                    <div class="cart-item">
+                        <img src="${item.product.thumbnails[0]}" alt="${item.product.title}">
+                        <div>
+                            <h5>${item.product.title}</h5>
+                            <p>Precio: $${item.product.price}</p>
+                        </div>
+                        <div class="quantity-control">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity('${item.product._id}', -1)">-</button>
+                            <input type="number" value="${item.qty}" class="form-control d-inline" style="width: 60px;" onchange="setQuantity('${item.product._id}', this.value)">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity('${item.product._id}', 1)">+</button>
+                        </div>
+                        <button class="btn btn-danger" onclick="removeFromCart('${item.product._id}')">Eliminar</button>
+                    </div>
+                `).join('');
+
+                const total = cart.products.reduce((sum, item) => sum + item.product.price * item.qty, 0);
+                summaryDiv.innerHTML = `
+                    <h4>Total: $${total.toLocaleString()}</h4>
+                    <button class="btn btn-success" onclick="checkout()">Finalizar compra</button>
+                `;
+            }
+        }
+
+        async function updateQuantity(productId, change) {
+            try {
+                const response = await fetch(`/api/cart/${cartId}/products/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ qty: change })
+                });
+                if (response.ok) {
+                    updateCart();
+                } else {
+                    console.error('Error al actualizar la cantidad:', await response.text());
+                }
+            } catch (error) {
+                console.error('Error al actualizar la cantidad:', error);
+            }
+        }
+
+        async function removeFromCart(productId) {
+            try {
+                const response = await fetch(`/api/cart/${cartId}/products/${productId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (response.ok) {
+                    updateCart();
+                } else {
+                    console.error('Error al eliminar el producto:', await response.text());
+                }
+            } catch (error) {
+                console.error('Error al eliminar el producto:', error);
+            }
+        }
+
+        // Popup al añadir producto
+        function showPopup(product) {
+            const popup = document.getElementById('cart-popup');
+            const content = document.getElementById('popup-content');
+            content.innerHTML = `
+                <p>${product.title} ha sido añadido al carrito.</p>
+                <p>Precio: $${product.price.toLocaleString()}</p>
+            `;
+            popup.style.display = 'block';
+        }
+
+        function closePopup() {
+            document.getElementById('cart-popup').style.display = 'none';
+        }
+
+        // Finalizar compra
+        async function checkout() {
+            try {
+                const response = await fetch(`/api/cart/${cartId}/purchase`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('¡Gracias por tu compra!');
+
+                    // Actualiza el carrito vacío después de la compra
+                    updateCart();
+
+                    // Opcional: Cerrar el popup si está abierto
+                    closePopup();
+                } else {
+                    const errorText = await response.text();
+                    console.error('Error al finalizar la compra:', errorText);
+                    alert('Error al realizar la compra. Por favor, intenta de nuevo.');
+                }
+            } catch (error) {
+                console.error('Error al finalizar la compra:', error);
+                alert('Error en la conexión. Intenta de nuevo más tarde.');
+            }
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.add-to-cart').forEach(button => {
+                button.addEventListener('click', () => {
+                    addToCart(button.getAttribute('data-productid'));
+                });
+            });
+
+            updateCart();
+        });
+    </script>
+</body>
+
+</html>

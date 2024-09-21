@@ -17,7 +17,7 @@ router.get('/getcookies', async (req, res) => {
 router.get('/setcookie', async (req, res) => {
     try {
         // maxAge = validez de la cookie en milisegundos, pasado ese tiempo
-        const cookieData = { user: 'cperren', email: 'idux.net@gmail.com' };
+        const cookieData = { user: 'tomas', email: 'tomaszalazardev@gmail.com' };
         res.cookie('TOMAS_APP_cookies', JSON.stringify(cookieData), { maxAge: 30000, signed: true });
         
         res.status(200).send({ origin: config.SERVER, payload: 'Cookie generada' });

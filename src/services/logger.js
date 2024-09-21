@@ -21,7 +21,7 @@ const customLevels = {
     }
 };
 
-// Definir formato personalizado para archivo
+// Definir formato 
 const fileFormat = winston.format.printf(({ level, message, timestamp }) => {
     return `
     ${timestamp} [${level}]
@@ -29,13 +29,13 @@ const fileFormat = winston.format.printf(({ level, message, timestamp }) => {
       `;
 });
 
-// Crear formato para consola con colorización
+// Crear formato
 const consoleFormat = winston.format.combine(
     winston.format.colorize(), // Añadir colorización
     winston.format.simple() // Formato simple para consola
 );
 
-// Crear logger para desarrollo
+
 const devLogger = winston.createLogger({
     levels: customLevels.levels,
     format: consoleFormat, // Formato para consola en desarrollo
@@ -44,12 +44,12 @@ const devLogger = winston.createLogger({
     ]
 });
 
-// Crear logger para producción
+
 const prodLogger = winston.createLogger({
     levels: customLevels.levels,
     format: winston.format.combine(
-        winston.format.timestamp(), // Añadir timestamp
-        fileFormat // Formato personalizado para el archivo
+        winston.format.timestamp(), 
+        fileFormat 
     ),
     transports: [
         new winston.transports.File({ level: 'error', filename: `${config.DIRNAME}/logs/errors.log` }), // Registrar error y superiores en archivo
@@ -71,7 +71,7 @@ const logHttpRequests = (req, res, next) => {
 
     res.on('finish', () => {
         const diff = process.hrtime(start);
-        const responseTime = (diff[0] * 1e3 + diff[1] * 1e-6).toFixed(2); // Tiempo de respuesta en ms
+        const responseTime = (diff[0] * 1e3 + diff[1] * 1e-6).toFixed(2);
 
         const logMessage = `${req.method} ${req.originalUrl} ${res.statusCode} ${responseTime} ms - ${res.get('Content-Length') || 0}`;
         req.logger.http(logMessage);
