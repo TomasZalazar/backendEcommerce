@@ -24,8 +24,7 @@ auth.post('/register', verifyRequiredBody(['firstName', 'lastName', 'email', 'pa
         if (!req.user) {
             return res.status(400).json({ error: 'El usuario ya existe' });
         }
-         // Enviar correo de bienvenida
-        
+
          await sendWelcomeEmail(req.user.email, req.user.firstName);
         
         res.redirect('/login');
