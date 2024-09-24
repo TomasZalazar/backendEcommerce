@@ -20,7 +20,6 @@ import authRoutes from './routes/auth.routes.js'
 import initSocket from './services/initSocket.js'
 import MongoSingleton from './services/mongo.singleton.js'
 import errorsHandler from './services/errors.handler.js'
-import cookieRouter from './routes/cookies.routes.js'
 import protectedRoutes from './routes/recover.routes.js'
 import uploadRouter from './routes/upload.routes.js'
 
@@ -79,36 +78,37 @@ const handlebars = exphbs.create({
 
     app.use(addLogger)
     app.use(logHttpRequests)
-    const swaggerOptions = {
-        definition: {
-            openapi: '3.0.1',
-            info: {
-                title: 'Documentación sistema TODOTIENDA',
-                description: 'Esta documentación cubre toda la API habilitada para TODOTIENDA',
-            },
-        },
-        apis: ['./src/docs/**/*.yaml'], // todos los archivos de configuración de rutas estarán aquí
-        // apis: ['./src/docs/**/documentacion.2.1.0.yaml'], // archivo yaml en especifico
-    };
-    const specs = swaggerJsdoc(swaggerOptions);
     app.use('/api/docs', swaggerUiExpress.serve, swaggerUiExpress.setup(specs));
-
+    
     // endpoints
     app.use('/api/products', productsRoutes)
     app.use('/api/users', usersRoutes)
     app.use('/api/cart', cartRoutes)
     app.use('/api/auth', authRoutes)
-    app.use('/api/cookies', cookieRouter);
     app.use('/api/recover', protectedRoutes);
     app.use('/upload', uploadRouter);
-
-
+    
+    
     app.use('/static', express.static(`${config.DIRNAME}/public`))
-
+    
     // views    
     app.use('/', viewsRoutes)
-
+    
     app.use(errorsHandler);
-
+    
 }) 
+
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.1',
+        info: {
+            title: 'Documentación sistema TODOTIENDA',
+            description: 'Esta documentación cubre toda la API habilitada para TODOTIENDA',
+        },
+    },
+    apis: ['./src/docs/**/*.yaml'], // todos los archivos de configuración de rutas estarán aquí
+    // apis: ['./src/docs/**/documentacion.2.1.0.yaml'], // archivo yaml en especifico
+};
+const specs = swaggerJsdoc(swaggerOptions);
+
 export default app;

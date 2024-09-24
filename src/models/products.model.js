@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import mongoosePaginate from 'mongoose-paginate-v2';
 mongoose.pluralize(null);
-// owner: { type: mongoose.Schema.Types.ObjectId, ref: 'users', default: 'admin' }, // por si quiero usar el ._id 
+
 
 const collection = 'products'
 // const collection = 'products_test'  // usar solo para test

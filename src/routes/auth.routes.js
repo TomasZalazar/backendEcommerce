@@ -39,7 +39,7 @@ auth.post('/login', verifyRequiredBody(['email', 'password']),
         res.status(200).json({ message: 'Inicio de sesión exitoso', user: req.user });
     }
 );
-// Ruta de login con Passport
+
 auth.post('/pplogin', verifyRequiredBody(['email', 'password']),
     passport.authenticate('login', { failureRedirect: `/login?error=${encodeURI('Usuario o clave no válidos')}` }),
     async (req, res) => {
@@ -58,12 +58,12 @@ auth.post('/pplogin', verifyRequiredBody(['email', 'password']),
             res.status(500).send({ origin: config.SERVER, payload: null, error: err.message });
         }
     });
-// Ruta para iniciar el flujo de autenticación con Google
+
 auth.get('/googlelogin',
     passport.authenticate('googlelogin', { scope: ['profile', 'email'] })
 );
 
-// Ruta para manejar la respuesta de Google después de la autenticación
+
 auth.get('/googlecallback',
     passport.authenticate('googlelogin', { failureRedirect: '/login?error=Error+al+identificar+con+Google' }),
     async (req, res) => {
@@ -165,15 +165,7 @@ auth.get('/current',
         }
     }
 );
-// auth.get('/current', passport.authenticate('current', { failureRedirect: `/current?error=${encodeURI('No hay un token registrado')}`}), async (req, res) => {
-//     try {
-//         const currentToken = req.user // Asumiendo que req.user ya contiene los datos que quieres enviar
-//         const { password, role, _id, ...filteredCurrent } = currentToken;
-//         res.status(200).send({ payload: filteredCurrent });
-//     } catch (error) {
-//         res.status(500).send({ error: error.message });
-//     }
-// });
+
 
 auth.get('/private', verifyToken, verifyAuthorization('admin'), async (req, res) => {
     try {

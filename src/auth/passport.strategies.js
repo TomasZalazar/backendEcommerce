@@ -157,7 +157,7 @@ const initAuthStrategies = () => {
     // Estrategia para verificación de token vía cookie
     passport.use('current', new jwtStrategy(
         {
-            // Aquí llamamos al extractor de cookie
+           
             jwtFromRequest: jwtExtractor.fromExtractors([cookieExtractor]),
             secretOrKey: config.SECRET
         },

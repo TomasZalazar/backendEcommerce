@@ -10,24 +10,25 @@
     <!-- Listado de productos -->
     <h1 class="mt-4">Listado de productos</h1>
     <div class="row">
-        {{#each products}}
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="card-title">Nombre del producto: {{title}}</h6>
-                    <p class="card-text">ID del producto: {{_id}}</p>
-                    <p class="card-text">Precio del producto: {{price}}</p>
-                    <p class="card-text">Descripción del producto: {{description}}</p>
-                    <p class="card-text">Stock disponible: {{stock}}</p>
-                    <p class="card-text">Categoría: {{category}}</p>
-                    <button class="btn btn-primary add-to-cart" data-cartid="{{cartId}}" data-productid="{{_id}}">
-                        Agregar al carrito
-                    </button>
-                </div>
+    {{#each products}}
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <img src="{{#if thumbnails}}{{this.thumbnails.[0]}}{{else}}/ruta/por/defecto/imagen.jpg{{/if}}" class="card-img-top" alt="Imagen del producto">
+            <div class="card-body">
+                <h6 class="card-title">Nombre del producto: {{title}}</h6>
+                <p class="card-text">ID del producto: {{_id}}</p>
+                <p class="card-text">Precio del producto: {{price}}</p>
+                <p class="card-text">Descripción del producto: {{description}}</p>
+                <p class="card-text">Stock disponible: {{stock}}</p>
+                <p class="card-text">Categoría: {{category}}</p>
+                <button class="btn btn-primary add-to-cart" data-cartid="{{cartId}}" data-productid="{{_id}}">
+                    Agregar al carrito
+                </button>
             </div>
         </div>
-        {{/each}}
     </div>
+    {{/each}}
+</div>
 
     <!-- Paginación -->
     <div id="pagination" class="mt-3">

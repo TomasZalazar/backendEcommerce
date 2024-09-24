@@ -36,27 +36,26 @@ class CartsManager {
             const requestedQuantity = item.qty;
 
             if (requestedQuantity <= productStock) {
-                // Modificar la cantidad restante del producto en la base de datos
+              
                 const quantityUpdated = productStock - requestedQuantity;
                 await this.productModel.findByIdAndUpdate(productId, { stock: quantityUpdated }, { new: true });
 
-                // Generar el ticket de compra
+               
                 ticketAmount += requestedQuantity * product.price;
 
             } else {
-                // Modificar el stock del producto
+              
                 await this.productModel.findByIdAndUpdate(productId, { stock: 0 }, { new: true });
 
-                // Dejar la cantidad no comprada en el carrito
+              
                 const quantityNotPurchased = requestedQuantity - productStock;
 
-                // Si no se puede actualizar el producto en el carrito, retorna un error
+               
                 const updateResponse = await this.updateProduct(cid, productId, quantityNotPurchased);
                 if (updateResponse.status !== 200) {
                     return { status: 500, error: 'Error actualizando la cantidad del producto en el carrito' };
                 }
 
-                // Generar el ticket con la cantidad comprada
                 ticketAmount += productStock * product.price;
             }
         }
@@ -104,7 +103,7 @@ El equipo de TodoTienda
 `;
 
             await sendPurchaseEmail(userData.email, subject, text);
-            // Limpiar el carrito después de la compra exitosa
+
             const clearCartResponse = await this.clearCartProducts(cid);
             if (clearCartResponse.status !== 200) {
                 console.error("Error limpiando los productos del carrito:", clearCartResponse.error);
@@ -114,7 +113,7 @@ El equipo de TodoTienda
             return { status: 200, payload: ticketFinished };
         }
 
-        // Si no se compró ningún producto, simplemente retorna un mensaje indicando que no se pudo procesar la compra
+
         return { status: 400, error: 'No se pudo completar la compra, por favor verifique la disponibilidad de los productos' };
     };
 
