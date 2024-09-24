@@ -60,7 +60,8 @@
             text-decoration: none;
         }
 
-        h1, h2 {
+        h1,
+        h2 {
             font-weight: 600;
         }
 
@@ -95,13 +96,17 @@
     <!-- Bienvenida y productos -->
     <div class="container">
         <h1 class="text-center mb-4">Bienvenido a nuestra tienda</h1>
-        <p class="text-center mb-4">Descubre nuestros productos destacados y añade tus favoritos a tu carrito. ¡Compra con confianza y aprovecha nuestras ofertas especiales!</p>
+        <p class="text-center mb-4">Descubre nuestros productos destacados y añade tus favoritos a tu carrito. ¡Compra
+            con confianza y aprovecha nuestras ofertas especiales!</p>
 
         <!-- Información sobre el sitio -->
         <div class="info-section">
             <h2>Sobre Nosotros</h2>
-            <p>En TODOTIENDA, nos dedicamos a ofrecerte los mejores productos a los mejores precios. Nos esforzamos por brindarte una experiencia de compra excepcional con un catálogo de productos cuidadosamente seleccionados para satisfacer tus necesidades.</p>
-            <p>Compra con tranquilidad gracias a nuestro seguro proceso de pago y a nuestro dedicado equipo de atención al cliente. ¡Gracias por elegirnos!</p>
+            <p>En TODOTIENDA, nos dedicamos a ofrecerte los mejores productos a los mejores precios. Nos esforzamos por
+                brindarte una experiencia de compra excepcional con un catálogo de productos cuidadosamente
+                seleccionados para satisfacer tus necesidades.</p>
+            <p>Compra con tranquilidad gracias a nuestro seguro proceso de pago y a nuestro dedicado equipo de atención
+                al cliente. ¡Gracias por elegirnos!</p>
         </div>
 
         <!-- Productos -->
@@ -114,9 +119,9 @@
                         <h5 class="card-title">{{title}}</h5>
                         <p class="card-text">{{description}}</p>
                         <p class="card-text"><strong>${{price}}</strong></p>
-                        <button class="btn btn-primary add-to-cart" data-cartid="{{cartId}}" data-productid="{{_id}}">
-                            Agregar al carrito
-                        </button>
+                    
+                        <a class="nav-link" href="/realtimeproducts">Ver mas productos</a>
+                        
                     </div>
                 </div>
             </div>
@@ -133,7 +138,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
-        integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
+        integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+        crossorigin="anonymous"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const socketClient = io('ws://localhost:4000');

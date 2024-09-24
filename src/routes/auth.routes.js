@@ -8,6 +8,7 @@ import { passportCall } from '../auth/passport.strategies.js';
 import moment from 'moment';
 import UserManager from '../models/dao/userManager.mdb.js';
 import userModel from '../models/users.model.js'
+import { sendWelcomeEmail } from '../services/emailService.js';
 
 const userManager = new UserManager(userModel);
 
@@ -19,11 +20,15 @@ auth.get('/hash/:password', async (req, res) => {
 });
 
 auth.post('/register', verifyRequiredBody(['firstName', 'lastName', 'email', 'password']),
-    passport.authenticate('register', { session: false }), (req, res) => {
+    passport.authenticate('register', { session: false }),async (req, res) => {
         if (!req.user) {
             return res.status(400).json({ error: 'El usuario ya existe' });
         }
-        res.status(201).json({ message: 'Usuario registrado exitosamente', user: req.user });
+         // Enviar correo de bienvenida
+        
+         await sendWelcomeEmail(req.user.email, req.user.firstName);
+        
+        res.redirect('/login');
     }
 );
 auth.post('/login', verifyRequiredBody(['email', 'password']),
