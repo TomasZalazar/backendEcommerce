@@ -11,56 +11,56 @@ class CartsManager {
     }
 
     purchaseCart = async (cid, user) => {
-        const cartResponse = await this.getById(cid); 
+        const cartResponse = await this.getById(cid);
         if (cartResponse.status !== 200) {
             throw new Error('Carrito no encontrado');
         }
-    
+
         const cart = cartResponse.payload;
         if (cart.products.length === 0) {
             return { status: 400, error: 'No hay productos en el carrito para comprar' };
         }
-    
+
         const userData = user;
         let ticketAmount = 0;
-    
+
         for (let item of cart.products) {
             const productId = item.product._id;
             const product = await this.productModel.findById(productId);
-            
+
             if (!product) {
                 throw new Error(`Producto no encontrado: ${productId}`);
             }
-    
+
             const productStock = product.stock;
             const requestedQuantity = item.qty;
-    
+
             if (requestedQuantity <= productStock) {
                 // Modificar la cantidad restante del producto en la base de datos
                 const quantityUpdated = productStock - requestedQuantity;
                 await this.productModel.findByIdAndUpdate(productId, { stock: quantityUpdated }, { new: true });
-    
+
                 // Generar el ticket de compra
                 ticketAmount += requestedQuantity * product.price;
-    
+
             } else {
                 // Modificar el stock del producto
                 await this.productModel.findByIdAndUpdate(productId, { stock: 0 }, { new: true });
-    
+
                 // Dejar la cantidad no comprada en el carrito
                 const quantityNotPurchased = requestedQuantity - productStock;
-    
+
                 // Si no se puede actualizar el producto en el carrito, retorna un error
                 const updateResponse = await this.updateProduct(cid, productId, quantityNotPurchased);
                 if (updateResponse.status !== 200) {
                     return { status: 500, error: 'Error actualizando la cantidad del producto en el carrito' };
                 }
-    
+
                 // Generar el ticket con la cantidad comprada
                 ticketAmount += productStock * product.price;
             }
         }
-    
+
         // Crear el ticket de compra si hay una cantidad total
         if (ticketAmount > 0) {
             const ticket = {
@@ -69,21 +69,51 @@ class CartsManager {
             };
             const ticketFinished = await TicketModel.create(ticket);
             console.log('Ticket creado:', ticketFinished);
-               // Enviar correo electrónico de confirmación
-               const subject = 'Compra realizada con éxito';
-               const text = `Hola ${userData.firstName},\n\nTu compra con el carrito ${cid} ha sido realizada con éxito.\n\nGracias por tu compra.\n\nSaludos,\nEquipo de Recreativos`;
-               
-               await sendPurchaseEmail(userData.email, subject, text);
+            // Enviar correo electrónico de confirmación
+            const subject = '¡Tu compra en TodoTienda ha sido exitosa!';
+
+            const productDetails = cart.products.map(item => {
+                const productName = item.product.title;
+                const quantity = item.qty;
+                const price = item.product.price;
+                const subtotal = (price * quantity).toFixed(2);
+
+                return `- ${productName} (Cantidad: ${quantity}) - Precio unitario: $${price.toFixed(2)} - Subtotal: $${subtotal}`;
+            }).join('\n');
+
+            const text = `
+Hola ${userData.firstName},
+
+¡Gracias por tu compra en TodoTienda!
+
+Nos complace informarte que hemos procesado tu pedido con el carrito de compras #${cid} de forma exitosa. A continuación, te proporcionamos un resumen detallado de tu compra:
+
+Productos adquiridos:
+${productDetails}
+
+Total de la compra: $${ticketAmount.toFixed(2)}
+
+Los productos adquiridos se procesarán a la brevedad y recibirás un correo con los detalles de envío una vez estén en camino.
+
+Si tienes alguna pregunta o inquietud sobre tu pedido, no dudes en contactarnos respondiendo a este correo.
+
+¡Gracias por confiar en TodoTienda!
+
+Saludos cordiales,
+El equipo de TodoTienda
+`;
+
+            await sendPurchaseEmail(userData.email, subject, text);
             // Limpiar el carrito después de la compra exitosa
             const clearCartResponse = await this.clearCartProducts(cid);
             if (clearCartResponse.status !== 200) {
                 console.error("Error limpiando los productos del carrito:", clearCartResponse.error);
                 return { status: 500, error: 'Error limpiando los productos del carrito después de la compra' };
             }
-    
+
             return { status: 200, payload: ticketFinished };
         }
-    
+
         // Si no se compró ningún producto, simplemente retorna un mensaje indicando que no se pudo procesar la compra
         return { status: 400, error: 'No se pudo completar la compra, por favor verifique la disponibilidad de los productos' };
     };
@@ -158,7 +188,7 @@ class CartsManager {
             if (!cart) {
                 return { status: 404, error: 'Cart not found' };
             }
-            
+
             const existingProduct = cart.products.find(item => String(item.product._id) === productId);
             if (existingProduct) {
                 existingProduct.qty += qty;
@@ -180,8 +210,17 @@ class CartsManager {
             if (!cart) {
                 return { status: 404, error: "Cart not found" };
             }
-
-            cart.products = cart.products.filter(item => String(item._id) !== productId);
+    
+            // Filtrar productos por su ID
+            const initialProductCount = cart.products.length;
+            cart.products = cart.products.filter(item => String(item.product._id) !== String(productId));
+    
+            if (initialProductCount === cart.products.length) {
+                // Si el número de productos no cambió, significa que el producto no estaba en el carrito
+                return { status: 404, error: "Product not found in cart" };
+            }
+    
+            // Guardar los cambios en el carrito
             await cart.save();
             return { origin: config.SERVER, status: 200, payload: cart };
         } catch (error) {
@@ -189,6 +228,7 @@ class CartsManager {
             return { status: 500, error: "Internal server error" };
         }
     }
+    
 
     async clearCartProducts(cartId) {
         try {

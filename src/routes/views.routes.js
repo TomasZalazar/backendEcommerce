@@ -118,16 +118,25 @@ views.get('/cartUser', verifyToken, async (req, res) => {
             return res.status(404).send('Cart not found.');
         }
 
+        // Calcular el total del carrito usando 'qty' en lugar de 'quantity'
+        let total = 0;
+        cart.products.forEach(item => {
+            total += item.product.price * item.qty;  // Utilizar 'qty' en lugar de 'quantity'
+        });
+
+        // Pasar el total calculado al render
         res.render('cart', { 
             cart: cart,
             user: req.user,
-            cartId: cartId 
+            cartId: cartId,
+            total: total  // Añadir el total al render
         });
     } catch (error) {
         console.error('Error al obtener el carrito:', error.message || error);
         res.status(500).send(`Error interno del servidor: ${error.message}`);
     }
 });
+
 views.get('/home',  async (req, res) => {
     try {
         const products = await productModel.find().limit(3).lean();  // Mostrar 3 productos destacados

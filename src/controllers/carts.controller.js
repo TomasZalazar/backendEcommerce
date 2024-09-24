@@ -102,8 +102,8 @@ export const addProductToCart = async (req, res) => {
 };
 
 export const removeProductFromCart = async (req, res) => {
-    const { id, productId } = req.params;
-    const result = await service.removeProductFromCart(id, productId);
+    const { cartId, productId } = req.params;
+    const result = await service.removeProductFromCart(cartId, productId);
     res.status(result.status).send(result.payload || { error: result.error });
 };
 

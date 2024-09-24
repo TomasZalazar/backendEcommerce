@@ -119,9 +119,27 @@
 
                     if (response.ok) {
                         console.log('Producto agregado al carrito con éxito:', result);
+                        Toastify({
+                        text: "Producto agregado al carrito exitosamente",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        style: {
+                            background: "green",
+                        }
+                    }).showToast();
                         // Actualizar la UI si es necesario
                     } else {
                         console.error('Error al agregar producto al carrito:', result.error || response.statusText);
+                        Toastify({
+                        text: data.payload || "Error al agregar el producto al carrito",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        style: {
+                            background: "red",
+                        }
+                    }).showToast();
                     }
                 } catch (error) {
                     console.error('Error al conectar con el servidor:', error.message);

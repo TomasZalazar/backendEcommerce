@@ -120,7 +120,7 @@ const initAuthStrategies = () => {
         {
             clientID: config.GITHUB_CLIENT_ID,
             clientSecret: config.GITHUB_CLIENT_SECRET,
-            callbackURL: config.GITHUB_CALLBACK_URL
+            callbackURL: config.GITHUB_CALLBACK_URL || 'http://localhost:4000/api/auth/ghc'
         },
         async (accessToken, refreshToken, profile, done) => {
             try {

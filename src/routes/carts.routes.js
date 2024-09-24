@@ -38,7 +38,7 @@ cart.get('/:id', getCartById);
 cart.post('/', verifyToken, createCart);
 cart.post('/:cartId/products/:productId',verifyToken,handlePolicies(['admin','user','premium']), addProductToCart);
 cart.delete('/:id/products', verifyToken, clearCartProducts);
-cart.delete('/:id/products/:productId', verifyToken, removeProductFromCart);
+cart.delete('/:cartId/products/:productId', verifyToken, removeProductFromCart);
 
 // Ruta para comprar el carrito
 cart.post('/:cartId/purchase', verifyToken, purchaseCart);
